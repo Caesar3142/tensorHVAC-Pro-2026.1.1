@@ -4,33 +4,376 @@
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self'; style-src 'self' 'unsafe-inline">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light">
   <title>tensorHVAC-Pro-2026.1.1 - License</title>
   <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 0; display: grid; place-items: center; height: 100vh; background: #f5f5f5; }
-    .card { width: 360px; border: 1px solid #ddd; border-radius: 14px; padding: 24px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    h2 { margin-top: 0; color: #1f2937; }
-    label { display:block; margin-top:12px; font-size: 0.9rem; color: #374151; font-weight: 500; }
-    input { width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; margin-top:6px; box-sizing: border-box; }
-    input:focus { outline: none; border-color: #3b82f6; }
-    button { margin-top:16px; width:100%; padding:12px; border:none; border-radius:10px; background:#3b82f6; color:white; font-weight:600; cursor: pointer; }
-    button:hover { background:#2563eb; }
-    button:disabled { background:#9ca3af; cursor: not-allowed; }
-    .msg { margin-top: 12px; min-height: 24px; font-size: 0.9rem; }
-    .msg.error { color: #dc2626; }
-    .msg.success { color: #16a34a; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #ffffff !important;
+      padding: 20px;
+      color-scheme: light;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
+    }
+
+    .logo-container {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, #6eaa5e 0%, #264625 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: white;
+    }
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .logo-subtitle {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 16px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 12px 12px 40px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+      background: #ffffff;
+      color: #111827;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #6eaa5e;
+    }
+
+    input::placeholder {
+      color: #9ca3af;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #6eaa5e 0%, #264625 100%);
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 8px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .button-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .spinner {
+      display: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    button.loading .spinner {
+      display: block;
+    }
+
+    .msg {
+      margin-top: 16px;
+      font-size: 13px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .msg.show {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .msg.error {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    .msg.success {
+      background: #f0fdf4;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+
+    .msg-icon {
+      font-size: 16px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .footer a {
+      color: #6eaa5e;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      font-size: 13px;
+      color: #374151;
+    }
+
+    .theme-toggle:hover {
+      background: #f9fafb;
+    }
+
+    /* Dark Mode */
+    body.dark-mode {
+      background: #0f172a;
+    }
+
+    body.dark-mode .card {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    body.dark-mode .logo-text,
+    body.dark-mode h2 {
+      color: #f1f5f9;
+    }
+
+    body.dark-mode .logo-subtitle,
+    body.dark-mode .subtitle,
+    body.dark-mode label {
+      color: #94a3b8;
+    }
+
+    body.dark-mode input {
+      background: #0f172a;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+
+    body.dark-mode input:focus {
+      border-color: #6eaa5e;
+    }
+
+    body.dark-mode .input-icon {
+      color: #64748b;
+    }
+
+    body.dark-mode .msg.error {
+      background: rgba(220, 38, 38, 0.15);
+      color: #fca5a5;
+      border-color: rgba(220, 38, 38, 0.3);
+    }
+
+    body.dark-mode .msg.success {
+      background: rgba(22, 163, 74, 0.15);
+      color: #86efac;
+      border-color: rgba(22, 163, 74, 0.3);
+    }
+
+    body.dark-mode .footer {
+      color: #94a3b8;
+    }
+
+    body.dark-mode .theme-toggle {
+      background: #1e293b;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+
+    body.dark-mode .theme-toggle:hover {
+      background: #334155;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 32px 24px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>Enter License</h2>
-    <label>Email</label>
-    <input id="email" type="email" placeholder="you@example.com" required>
-    <label>Product Key</label>
-    <input id="productKey" type="text" placeholder="XXXXXX-XXXXXX" required>
-    <button id="submit">Validate</button>
-    <div class="msg" id="msg"></div>
+  <div class="container">
+    <div class="card">
+      <div class="logo-container">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-text">tensorHVAC-Pro</div>
+        <div class="logo-subtitle">Version 2026.1.1</div>
+      </div>
+
+      <h2>License Validation</h2>
+      <p class="subtitle">Enter your credentials to access the application</p>
+
+      <form id="licenseForm">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-wrapper">
+            <span class="input-icon">✉</span>
+            <input 
+              id="email" 
+              type="email" 
+              placeholder="your.email@example.com" 
+              required
+              autocomplete="email"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="productKey">Product Key</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔑</span>
+            <input 
+              id="productKey" 
+              type="text" 
+              placeholder="XXXXXX-XXXXXX" 
+              required
+              autocomplete="off"
+            >
+          </div>
+        </div>
+
+        <button type="submit" id="submit">
+          <div class="button-content">
+            <div class="spinner"></div>
+            <span class="button-text">Validate License</span>
+          </div>
+        </button>
+
+        <div class="msg" id="msg"></div>
+      </form>
+
+      <div class="footer">
+        Need help? <a href="https://tensorhvac.com" target="_blank">Visit our support page</a>
+      </div>
+    </div>
   </div>
+
+  <div class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">
+    <span class="theme-toggle-icon" id="themeIcon">🌙</span>
+    <span class="theme-toggle-text" id="themeText">Dark</span>
+  </div>
+
   <script src="renderer.js"></script>
 </body>
 </html>
-
