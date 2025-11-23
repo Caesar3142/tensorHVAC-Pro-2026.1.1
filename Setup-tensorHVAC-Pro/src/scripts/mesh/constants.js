@@ -14,4 +14,4 @@ export const LOCAL_TO_LEVEL = {
 export const GEO_KEYS = [ "ceiling", "floor", "inlet", "object", "outlet", "wall", "wind" ];
 
 /* WSL / tools */
-export const TCFDPRE_PATH = '"C:\\tensorCFD\\tools\\tCFD-Pre-2026.1.0\\tCFD-Pre-2026.1.0.exe';
+export const TCFDPRE_PATH = '"C:\\tensorCFD\\tools\\tCFD-Pre-2026.1.1\\tCFD-Pre-2026.1.1.exe';

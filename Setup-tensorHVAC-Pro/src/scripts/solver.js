@@ -281,7 +281,7 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
       // Launch ParaView with the .foam file path (default Windows path here)
-      const paraviewExe = "C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.0\\bin\\paraview.exe";
+      const paraviewExe = "C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.1\\bin\\paraview.exe";
       const foamPath = (casePath.endsWith('\\') || casePath.endsWith('/')) ? `${casePath}${foamName}` : `${casePath}\\${foamName}`;
       const cmd = `"${paraviewExe}" "${foamPath}"`;
 

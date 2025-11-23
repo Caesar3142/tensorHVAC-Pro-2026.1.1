@@ -1,7 +1,7 @@
 {
   "name": "Installer_tensorHVAC-Pro",
-  "version": "2026.1.0",
-  "description": "Installer for WSL, OpenFOAM, ParaView-mod, tCFD-Pre, and tensorHVAC-Pro-2026.1.0",
+  "version": "2026.1.1",
+  "description": "Installer and Uninstaller for WSL, OpenFOAM, ParaView-mod, tCFD-Pre, and tensorHVAC-Pro-2026.1.1",
   "main": "main.js",
   "author": "PT Tensor Karya Nusantara",
   "license": "MIT",
@@ -11,7 +11,7 @@
   },
   "build": {
     "appId": "com.tensorcfd.installer",
-    "productName": "Installer tensorHVAC-Pro-2026.1.0",
+    "productName": "tensorHVAC-Pro Installer/Uninstaller",
     "directories": {
       "buildResources": "assets"
     },

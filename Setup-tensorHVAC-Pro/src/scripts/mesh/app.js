@@ -302,7 +302,7 @@ $('btnCheck')?.addEventListener('click', async (e) => {
 
     const platform = (window.api?.env?.platform) || (navigator.platform || '').toLowerCase();
     let paraviewExe = null;
-    if (platform.includes('win')) paraviewExe = 'C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.0\\bin\\paraview.exe';
+    if (platform.includes('win')) paraviewExe = 'C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.1\\bin\\paraview.exe';
     else if (platform.includes('mac') || platform.includes('darwin')) paraviewExe = '/Applications/ParaView.app/Contents/MacOS/paraview';
     else paraviewExe = '/usr/bin/paraview';
 

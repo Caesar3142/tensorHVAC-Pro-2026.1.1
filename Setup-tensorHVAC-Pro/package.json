@@ -1,6 +1,6 @@
 {
   "name": "tensorHVAC-Pro",
-  "version": "2026.1.0",
+  "version": "2026.1.1",
   "description": "Dedicated HVAC flow and thermal simulation software for HVAC engineers - not CFD expert",
   "author": "PT Tensor Karya Nusantara",
   "license": "Proprietary",
@@ -16,7 +16,9 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
-    "fs-extra": "^11.2.0"
+    "fs-extra": "^11.2.0",
+    "dotenv": "^16.4.5",
+    "keytar": "^7.9.0"
   },
   "devDependencies": {
     "electron": "^30.0.0",
@@ -31,6 +33,14 @@
     },
     "extraResources": [
       { "from": "master", "to": "master" }
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "services/**/*",
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
     ],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],

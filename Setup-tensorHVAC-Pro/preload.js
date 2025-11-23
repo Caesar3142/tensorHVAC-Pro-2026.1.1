@@ -50,6 +50,16 @@ function invoke(channel, ...args) {
 /* ---------------- App API (IPC → main) ---------------- */
 
 const api = {
+  // License ops
+  validateLicense: (email, productKey) => {
+    assertString(email, "email");
+    assertString(productKey, "productKey");
+    return invoke("license:validate", { email, productKey });
+  },
+  licenseStatus: () => invoke("license:status"),
+  licenseClear: () => invoke("license:clear"),
+  logout: () => invoke("app:logout"),
+  
   // Case ops (go through main)
   createCase: (caseName, casePath) => {
     assertString(caseName, "caseName");
@@ -91,6 +101,9 @@ const api = {
     ipcRenderer.on("menu-open-case", cb);
     return () => ipcRenderer.removeListener("menu-open-case", cb);
   },
+  
+  // Generic invoke helper (for app:proceed, etc.)
+  invoke: (channel, ...args) => invoke(channel, ...args),
 
   // Lightweight native FS helpers used by the meshing UI
   // (operate ONLY within the provided caseRoot with path checks)

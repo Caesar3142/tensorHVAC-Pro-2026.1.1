@@ -6,9 +6,10 @@ const fs = require("fs");
 const fse = require("fs-extra");
 const { exec } = require("child_process");
 
-// === Handshake module import (moved out of this file) ===
-// Centralizes the "verify or quit" logic used to gate the protected app.
-const { hasValidHandshake, abortForInvalidHandshake } = require("./handshake");
+// === License service import ===
+// License validation and cache management
+let validateLicense;
+let isExpired;
 
 // === Environment flags ===
 // OS and packaging flags used for branching logic and UI/UX differences.
@@ -18,6 +19,43 @@ const isDev = !app.isPackaged;
 // === Global window reference ===
 // Holds the main BrowserWindow instance for lifecycle management.
 let mainWindow;
+
+// === License cache paths ===
+const CACHE_PATH = path.join(app.getPath("userData"), "license-cache.json");
+const SERVICE_NAME = "electron-license-app";
+const ACCOUNT_NAME = "license";
+
+// === License cache helpers ===
+async function getCachedLicense() {
+  try {
+    if (fs.existsSync(CACHE_PATH)) {
+      return JSON.parse(fs.readFileSync(CACHE_PATH, "utf-8"));
+    }
+  } catch {}
+  // Try keytar if available (optional dependency)
+  try {
+    const keytar = require("keytar");
+    const stored = await keytar.getPassword(SERVICE_NAME, ACCOUNT_NAME);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return null;
+}
+
+function setCachedLicense(data) {
+  try { fs.writeFileSync(CACHE_PATH, JSON.stringify(data, null, 2)); } catch {}
+  try {
+    const keytar = require("keytar");
+    keytar.setPassword(SERVICE_NAME, ACCOUNT_NAME, JSON.stringify(data));
+  } catch {}
+}
+
+async function clearCachedLicense() {
+  try { if (fs.existsSync(CACHE_PATH)) fs.unlinkSync(CACHE_PATH); } catch {}
+  try {
+    const keytar = require("keytar");
+    await keytar.deletePassword(SERVICE_NAME, ACCOUNT_NAME);
+  } catch {}
+}
 
 /* ---------- Helpers ---------- */
 
@@ -50,6 +88,47 @@ function findEntryFile() {
     if (fs.existsSync(p)) return p;
   }
   return null;
+}
+
+// === Boot flow: check license and return appropriate HTML ===
+async function boot() {
+  const cached = await getCachedLicense();
+
+  if (!cached || !cached.email || !cached.product_key) {
+    return path.join(__dirname, "src", "login", "index.html"); // login page
+  }
+
+  if (isExpired(cached.end_date)) {
+    await clearCachedLicense();
+    return path.join(__dirname, "src", "login", "index.html");
+  }
+
+  const res = await validateLicense(cached.email, cached.product_key);
+  if (res?.ok && !isExpired(res.end_date)) {
+    setCachedLicense({ email: cached.email, product_key: cached.product_key, end_date: res.end_date });
+    // Show home page
+    return findEntryFile();
+  }
+
+  await clearCachedLicense();
+  return path.join(__dirname, "src", "login", "index.html");
+}
+
+// === Load license service ===
+function loadLicenseService() {
+  if (!process.env.LICENSE_LIST_URL) {
+    // Default license URL (can be overridden via env)
+    process.env.LICENSE_LIST_URL = "https://pttensor.com/gsBf109rjasokj1-sdfmkdnq-32475089314@#$_I#$@#&*52342sd";
+  }
+  console.log("[MAIN] Using LICENSE_LIST_URL:", process.env.LICENSE_LIST_URL);
+
+  const mod = require("./services/licenseService.js");
+  validateLicense = mod.validateLicense;
+  isExpired = mod.isExpired;
+
+  if (!validateLicense || !isExpired) {
+    console.error("[MAIN] licenseService not loaded correctly.");
+  }
 }
 
 // === Preload script resolution ===
@@ -235,6 +314,21 @@ function createMenu() {
           accelerator: isMac ? "Cmd+O" : "Ctrl+O",
           click: () => mainWindow?.webContents.send("menu-open-case"),
         },
+        { type: "separator" },
+        {
+          label: "Logout",
+          click: async () => {
+            try {
+              await clearCachedLicense();
+              if (mainWindow) {
+                await mainWindow.loadFile(path.join(__dirname, "src", "login", "index.html"));
+              }
+            } catch (err) {
+              console.error("[MAIN] Logout failed", err);
+              dialog.showErrorBox("Logout Error", err?.message || "Failed to logout");
+            }
+          },
+        },
         isMac ? { role: "close" } : { role: "quit" },
       ],
     },
@@ -340,11 +434,6 @@ function createMainWindow() {
     },
   });
 
-  // PROD/STATIC (your current HTML layout):
-  const entry = findEntryFile();
-  if (!entry) return failNoEntry();
-  mainWindow.loadFile(entry);
-
   // Apply initial title
   applyWindowTitle();
 
@@ -397,12 +486,70 @@ function failNoEntry() {
   app.quit();
 }
 
+/* ---------- IPC: License operations ---------- */
+
+// Validate license and cache results
+ipcMain.handle("license:validate", async (_evt, { email, productKey }) => {
+  try {
+    const result = await validateLicense(email, productKey);
+    console.log("[LICENSE] validate", { email, ok: result.ok, msg: result.message, end: result.end_date });
+    if (result.ok) {
+      setCachedLicense({ email, product_key: productKey, end_date: result.end_date });
+    }
+    return result;
+  } catch (e) {
+    console.error("[LICENSE] validate error:", e);
+    return { ok: false, message: e?.message || "Validation failed." };
+  }
+});
+
+// Switch to home page after successful validation
+ipcMain.handle("app:proceed", async () => {
+  if (!mainWindow) return { ok: false, message: "No main window" };
+  const entry = findEntryFile();
+  if (!entry) return { ok: false, message: "Home page not found" };
+  await mainWindow.loadFile(entry);
+  return { ok: true };
+});
+
+// Get or clear cached license info
+ipcMain.handle("license:status", async () => {
+  try {
+    const cached = await getCachedLicense();
+    return { ok: true, cached };
+  } catch (e) {
+    return { ok: false, message: e?.message || "Failed to read cache." };
+  }
+});
+
+ipcMain.handle("license:clear", async () => {
+  try {
+    await clearCachedLicense();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: e?.message || "Failed to clear cache." };
+  }
+});
+
+// Logout and return to login view (clears credentials)
+ipcMain.handle("app:logout", async () => {
+  try {
+    await clearCachedLicense();
+    if (mainWindow) {
+      await mainWindow.loadFile(path.join(__dirname, "src", "login", "index.html"));
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error("[MAIN] Logout failed", err);
+    return { ok: false, message: err.message };
+  }
+});
+
 /* ---------- IPC: case & file operations ---------- */
 
 // === Create a new CFD case from a master template ===
 // Copy from packaged /master (resources/master in prod) to user-selected target path.
 ipcMain.handle("create-case", async (_evt, caseName, casePath) => {
-  if (!handshakeOK) throw new Error("Unauthorized: invalid launch handshake.");
   if (!caseName || !casePath) throw new Error("Missing case name or target path.");
 
   const targetPath = path.join(casePath, caseName);
@@ -427,7 +574,6 @@ ipcMain.handle("create-case", async (_evt, caseName, casePath) => {
 // === Open an existing case directory ===
 // Prompts user to pick a folder that contains standard OpenFOAM case structure.
 ipcMain.handle("open-case", async () => {
-  if (!handshakeOK) throw new Error("Unauthorized: invalid launch handshake.");
   const res = await dialog.showOpenDialog({
     properties: ["openDirectory"],
     title: 'Open a case folder (contains "0", "constant", and "system")',
@@ -450,7 +596,6 @@ ipcMain.on("ui:set-active-case", (_evt, p) => {
 // === Read a text file from an opened case ===
 // Validates subpath to prevent escapes; returns UTF-8 content.
 ipcMain.handle("read-case-file", async (_evt, caseRoot, relPath) => {
-  if (!handshakeOK) throw new Error("Unauthorized: invalid launch handshake.");
   if (!caseRoot || !relPath) throw new Error("Invalid path.");
   const target = path.join(caseRoot, relPath);
   if (!isSubpath(caseRoot, target)) throw new Error("Path escape blocked.");
@@ -460,7 +605,6 @@ ipcMain.handle("read-case-file", async (_evt, caseRoot, relPath) => {
 // === Write a text file into an opened case ===
 // Ensures directory exists and writes UTF-8 content safely under case root.
 ipcMain.handle("write-case-file", async (_evt, caseRoot, relPath, content) => {
-  if (!handshakeOK) throw new Error("Unauthorized: invalid launch handshake.");
   if (!caseRoot || !relPath) throw new Error("Invalid path.");
   const target = path.join(caseRoot, relPath);
   if (!isSubpath(caseRoot, target)) throw new Error("Path escape blocked.");
@@ -472,7 +616,6 @@ ipcMain.handle("write-case-file", async (_evt, caseRoot, relPath, content) => {
 // === Generic folder picker ===
 // Used for case creation targets or other folder selection needs.
 ipcMain.handle("select-folder", async () => {
-  if (!handshakeOK) throw new Error("Unauthorized: invalid launch handshake.");
   const res = await dialog.showOpenDialog({
     properties: ["openDirectory", "createDirectory"],
     title: "Select a folder",
@@ -483,51 +626,60 @@ ipcMain.handle("select-folder", async () => {
 
 /* ---------- App lifecycle ---------- */
 
-// === Handshake gate flag ===
-// Set true only when launcher-provided secret is verified.
-let handshakeOK = false;
-
-// === Early handshake enforcement ===
-// If invalid, defer dialog until app is ready, then quit. If valid, continue boot.
-if (!hasValidHandshake()) {
-  // Wait until ready so we can show a proper dialog, then quit.
-  app.whenReady().then(abortForInvalidHandshake);
+// === Single instance lock ===
+// Prevents multiple instances; focuses existing window if a second is launched.
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
 } else {
-  handshakeOK = true;
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
 
-  // === Single instance lock ===
-  // Prevents multiple instances; focuses existing window if a second is launched.
-  const gotLock = app.requestSingleInstanceLock();
-  if (!gotLock) {
-    app.quit();
-  } else {
-    app.on("second-instance", () => {
-      if (mainWindow) {
-        if (mainWindow.isMinimized()) mainWindow.restore();
-        mainWindow.focus();
+  // === App ready: identity, menu, window ===
+  // Sets Windows AppUserModelID, builds menu, and opens the main window.
+  app.whenReady().then(async () => {
+    if (process.platform === "win32") {
+      app.setAppUserModelId("com.tensorhvac.pro");
+    }
+    
+    // Load license service first
+    loadLicenseService();
+    
+    createMenu();
+    
+    // Determine which page to load based on license
+    const entryFile = await boot();
+    if (!entryFile) {
+      failNoEntry();
+      return;
+    }
+    
+    createMainWindow();
+    // Load the determined entry file
+    if (mainWindow) {
+      mainWindow.loadFile(entryFile);
+    }
+
+    app.on("activate", async () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        const entryFile = await boot();
+        createMainWindow();
+        if (mainWindow && entryFile) {
+          mainWindow.loadFile(entryFile);
+        }
       }
     });
+  });
 
-    // === App ready: identity, menu, window ===
-    // Sets Windows AppUserModelID, builds menu, and opens the main window.
-    app.whenReady().then(() => {
-      if (process.platform === "win32") {
-        app.setAppUserModelId("com.tensorhvac.pro");
-      }
-      createMenu();
-      createMainWindow();
-
-      app.on("activate", () => {
-        if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
-      });
-    });
-
-    // === Quit behavior on all windows closed ===
-    // Standard macOS behavior keeps app open; other platforms quit.
-    app.on("window-all-closed", () => {
-      if (!isMac) app.quit();
-    });
-  }
+  // === Quit behavior on all windows closed ===
+  // Standard macOS behavior keeps app open; other platforms quit.
+  app.on("window-all-closed", () => {
+    if (!isMac) app.quit();
+  });
 }
 
 /* ---------- External tool launchers (platform defaults) ---------- */
@@ -537,8 +689,8 @@ if (!hasValidHandshake()) {
 const DEFAULT_LAUNCH_TARGETS = (() => {
   if (process.platform === "win32") {
     return {
-      paraview: "C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.0\\bin\\paraview.exe",
-      tCFDPre: "C:\\tensorCFD\\tools\\tCFD-Pre-2026.1.0\\tCFD-Pre-2026.1.0.exe",
+      paraview: "C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.1\\bin\\paraview.exe",
+      tCFDPre: "C:\\tensorCFD\\tools\\tCFD-Pre-2026.1.1\\tCFD-Pre-2026.1.1.exe",
     };
   } else if (process.platform === "darwin") {
     return {
@@ -554,13 +706,8 @@ const DEFAULT_LAUNCH_TARGETS = (() => {
 })();
 
 // === Launch external tools (tCFD-Pre/ParaView) ===
-// Requires a valid handshake; uses execFile first then falls back to spawn/cmd.
+// Uses execFile first then falls back to spawn/cmd.
 function launchExternal(which) {
-  if (!handshakeOK) {
-    dialog.showErrorBox("Unauthorized", "This action is blocked due to invalid launch handshake.");
-    return false;
-  }
-
   const exe = getToolPath(which);
   if (!exe) {
     dialog.showErrorBox("Launch error", `Unknown app: ${which}`);
@@ -620,10 +767,8 @@ function launchExternal(which) {
 /* ---------- Exec bridge (renderer → main) ---------- */
 
 // === Controlled shell command execution ===
-// Exposes a guarded exec bridge with timeout; requires valid handshake.
+// Exposes a guarded exec bridge with timeout.
 ipcMain.handle("exec:run", async (_evt, cmd, opts = {}) => {
-  if (!handshakeOK) throw new Error("Unauthorized: invalid launch handshake.");
-
   const execOpts = {
     shell: true,
     windowsHide: true,
