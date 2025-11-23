@@ -5,6 +5,25 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
 <title>Help</title>
 <link rel="stylesheet" href="../styles/main.css" />
+<script>
+  // Apply dark mode immediately to prevent flash
+  (function() {
+    try {
+      document.documentElement.classList.add('no-transition');
+      const theme = localStorage.getItem('app-theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark-mode');
+        document.body.classList.add('dark-mode');
+      }
+      // Remove no-transition class after a brief delay to allow smooth manual toggles
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          document.documentElement.classList.remove('no-transition');
+        });
+      });
+    } catch(e) {}
+  })();
+</script>
 </head>
 <body>
   

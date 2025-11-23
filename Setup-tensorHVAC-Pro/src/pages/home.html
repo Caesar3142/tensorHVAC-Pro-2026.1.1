@@ -14,6 +14,25 @@
   <link rel="shortcut icon" href="../assets/icons/tensorHVAC-pro-icon.png" />
 
   <link rel="stylesheet" href="../styles/main.css" />
+  <script>
+    // Apply dark mode immediately to prevent flash
+    (function() {
+      try {
+        document.documentElement.classList.add('no-transition');
+        const theme = localStorage.getItem('app-theme') || 'light';
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+          document.body.classList.add('dark-mode');
+        }
+        // Remove no-transition class after a brief delay to allow smooth manual toggles
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            document.documentElement.classList.remove('no-transition');
+          });
+        });
+      } catch(e) {}
+    })();
+  </script>
   <style>
     /* page-local, non-conflicting tweaks */
     :root {

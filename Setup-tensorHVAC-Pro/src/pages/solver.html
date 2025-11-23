@@ -8,6 +8,25 @@
                  script-src 'self'">
   <title>Solver setup</title>
   <link rel="stylesheet" href="../styles/main.css" />
+  <script>
+    // Apply dark mode immediately to prevent flash
+    (function() {
+      try {
+        document.documentElement.classList.add('no-transition');
+        const theme = localStorage.getItem('app-theme') || 'light';
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+          document.body.classList.add('dark-mode');
+        }
+        // Remove no-transition class after a brief delay to allow smooth manual toggles
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            document.documentElement.classList.remove('no-transition');
+          });
+        });
+      } catch(e) {}
+    })();
+  </script>
   <style>
     /* Layout & cards (align with other pages) */
     .row { display:flex; gap:10px; align-items:center; }
