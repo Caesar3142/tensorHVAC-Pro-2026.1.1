@@ -1,0 +1,49 @@
+{
+  "name": "tensorHVAC-Pro",
+  "version": "2026.1.0",
+  "description": "Dedicated HVAC flow and thermal simulation software for HVAC engineers - not CFD expert",
+  "author": "PT Tensor Karya Nusantara",
+  "license": "Proprietary",
+  "main": "main.js",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electronmon .",
+    "build": "electron-builder --win --x64",
+    "build:win": "electron-builder --win --x64",
+    "clean:cache": "node -e \"require('fs').rmSync(process.env.LOCALAPPDATA + '/electron-builder/Cache', {recursive:true, force:true})\"",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^26.0.12",
+    "electronmon": "^2.0.2"
+  },
+  "build": {
+    "appId": "com.tensorhvac.pro",
+    "productName": "tensorHVAC-Pro",
+    "directories": {
+      "output": "dist"
+    },
+    "extraResources": [
+      { "from": "master", "to": "master" }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "assets/icons/app.ico",
+      "artifactName": "tensorHVAC-Pro-Setup-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "tensorHVAC-Pro"
+    }
+  }
+}
+

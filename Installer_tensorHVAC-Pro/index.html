@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>tensorHVAC-Pro-2026.1.0 Installer</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, Arial; margin: 20px; }
+    h1 { margin: 0 0 12px; }
+    #startBtn { padding: 10px 16px; font-size: 14px; }
+    #steps { margin-top: 12px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    .step { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; }
+    .step:last-child { border-bottom: none; }
+    .status { font-weight: 600; }
+    .running { color: #b8860b; }
+    .done { color: #2e8b57; }
+    .error { color: #b22222; }
+    #log { width: 100%; height: 280px; margin-top: 12px; padding: 10px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 8px; background: #fafafa; white-space: pre-wrap; overflow: auto; }
+    .hint { color: #555; margin-top: 8px; font-size: 12px; }
+    fieldset { margin-top: 12px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
+    legend { font-weight: 600; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .muted { color: #555; font-size: 12px; }
+    .controls { display: flex; gap: 8px; margin-top: 8px; }
+    .secondary { padding: 6px 10px; font-size: 13px; }
+    .eula { margin-top: 8px; }
+    .eula-box { background: #fafafa; border: 1px solid #eee; padding: 8px; border-radius: 6px; max-height: 120px; overflow: auto; font-size: 12px; }
+    #forumBtn { padding: 6px 10px; font-size: 12px; background-color: #a3b5db; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    #forumBtn:hover { background-color: #a4b2bd; }
+  </style>
+</head>
+<body>
+  <h1>tensorHVAC-Pro-2026.1.0 Installer</h1>
+  <p>Installs: WSL Ubuntu 24.04, OpenFOAM 2506, ParaView-mod 2026.1.0, tCFD-Pre 2026.1.0, and deploys Setup & Launcher to <code>C:\tensorCFD\tensorHVAC-Pro</code>. Creates a desktop shortcut to the launcher.</p>
+
+  <p>If any problems occur during installation, please check the discussion forum below.</p>
+  <button id="forumBtn" type="button" onclick="window.open('https://tensorhvac.com/discussion-forum', '_blank')">Discussion Forum</button>
+  <p>You can skip WSL if it's already installed, but make sure to install OpenFOAM 2506 manually if it isn’t.</p>
+
+  <fieldset>
+    <legend>Choose components to install</legend>
+    <div class="row"><label><input type="checkbox" id="cb-wsl" checked> #1 WSL/Ubuntu 24.04 (steps 1.1–1.5)</label></div>
+    <div class="row"><label><input type="checkbox" id="cb-openfoam" checked> #2 OpenFOAM 2506 (requires Ubuntu)</label></div>
+    <div class="row"><label><input type="checkbox" id="cb-paraview" checked> #3 ParaView-mod 2026.1.0 → C:\tensorCFD\tools</label></div>
+    <div class="row"><label><input type="checkbox" id="cb-tcfdpre" checked> #4 tCFD-Pre 2026.1.0 → C:\tensorCFD\tools</label></div>
+    <div class="row"><label><input type="checkbox" id="cb-setup" checked> #5 Setup-tensorHVAC-Pro-2026.1.0 → C:\tensorCFD\tensorHVAC-Pro</label></div>
+    <div class="row"><label><input type="checkbox" id="cb-launcher" checked> #6 Launcher 2026.1.0 → C:\tensorCFD\tensorHVAC-Pro</label></div>
+    <div class="row"><label><input type="checkbox" id="cb-shortcut" checked> #7 Create desktop launcher shortcut</label></div>
+
+    <div class="controls">
+      <button id="checkAll" class="secondary" type="button">Select All</button>
+      <button id="uncheckAll" class="secondary" type="button">Select None</button>
+      <span class="muted">Tip: uncheck items you’ve already installed to skip repeating them.</span>
+    </div>
+  </fieldset>
+
+  <fieldset class="eula">
+    <legend>License Agreement</legend>
+    <div class="eula-box">
+      <p><strong>tensorHVAC-Pro EULA</strong></p>
+      <p>By proceeding you confirm you are authorized to install this software on this device, and agree to the licensing terms for Ubuntu, OpenFOAM, ParaView, tCFD-Pre, and Tensor HVAC components.</p>
+    <p> Read full EULA <a href="https://tensorhvac.com/license-agreement" target="_blank" rel="noopener noreferrer">here &raquo;</a></p>
+
+    
+    </div>
+    <label><input type="checkbox" id="cb-eula" /> I have read and agree to the license agreement</label>
+  </fieldset>
+
+  <div class="controls" style="margin-top: 12px;">
+    <button id="startBtn" disabled>Start Installation</button>
+  </div>
+
+  <div id="steps">
+  <div class="step"><span>#1 WSL/Ubuntu 24.04</span><span id="s-1" class="status">pending</span></div>
+  <div class="step"><span>#2 OpenFOAM 2506</span><span id="s-2" class="status">pending</span></div>
+  <div class="step"><span>#3 ParaView-mod 2026.1.0</span><span id="s-3" class="status">pending</span></div>
+  <div class="step"><span>#4 tCFD-Pre 2026.1.0</span><span id="s-4" class="status">pending</span></div>
+  <div class="step"><span>#5 Setup (tensorHVAC-Pro-2026.1.0)</span><span id="s-5" class="status">pending</span></div>
+  <div class="step"><span>#6 Launcher 2026.1.0</span><span id="s-6" class="status">pending</span></div>
+  <div class="step"><span>#7 Create desktop shortcut</span><span id="s-7" class="status">pending</span></div>
+</div>
+
+
+  <div class="hint">Tip: run as Administrator, ensure Internet, and keep the window open. All command output appears below.</div>
+  <pre id="log"></pre>
+  <script src="renderer.js"></script>
+</body>
+</html>

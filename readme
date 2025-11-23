@@ -1,0 +1,19 @@
+This is tensorHVAC-Pro-2026.1.0
+
+You have to build 4 apps:
+(1) Setup: the main app to edit mesh, boundaries, and run simulation
+(2) Launcher: validate the license and act as "handshake" to open protected Setup
+(3) Installer: install WSL, OpenFOAM, Setup, Launcher, ParaView, and Blender
+(4) Uninstaller: Uninstall all the installed apps and clean directories
+
+How to build:
+#1. Build Setup & Launcher
+#2. copy setup.exe * launcher.exe to installer/assets/
+#3. Build installer
+
+Major update 2026.1.0: 
+- tCFD-Pre first release
+- Installer not extract exe, just download and copy
+- move paraview & tCFD path to C:/tensorCFD/tools
+- move Setup & Launcher path to C:/tensorCFD/tensorHVAC-Pro/tensorHVAC-Pro-202x.x.x
+- wind patch defined without wind.stl

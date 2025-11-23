@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Welcome to tensorHVAC-Pro-2026.1.0</title>
+
+  <!-- Favicons with fallbacks (PNG first, ICO last) -->
+  <link rel="icon" type="image/png" href="../assets/icons/tensorHVAC-pro-icon.png" />
+  <link rel="icon" type="image/png" href="../../assets/icons/tensorHVAC-pro-icon.png" />
+  <link rel="icon" type="image/png" href="/assets/icons/tensorHVAC-pro-icon.png" />
+  <link rel="icon" type="image/x-icon" href="../assets/icons/app.ico" />
+  <link rel="shortcut icon" href="../assets/icons/tensorHVAC-pro-icon.png" />
+
+  <link rel="stylesheet" href="../styles/main.css" />
+  <style>
+    /* page-local, non-conflicting tweaks */
+    :root {
+      --home-bg: #f8fafb;
+      --home-card: #ffffff;
+      --home-ink: #1f2937;
+      --home-muted: #6b7280;
+      --home-accent: #16a34a;
+      --home-accent-600: #15803d;
+      --home-border: #e5e7eb;
+      --home-shadow: 0 8px 20px rgba(17, 24, 39, 0.06), 0 2px 8px rgba(17, 24, 39, 0.05);
+      --home-radius: 12px;
+    }
+
+    /* only this page’s main panel uses the lighter bg */
+    .main { background: var(--home-bg); }
+
+    .home-container { max-width: 960px; margin: 0 auto; padding: 16px 20px 48px; }
+
+    .hero-title {
+      font-size: 44px; font-weight: 800; color: #1e293b; text-align: center; margin: 20px 0 8px;
+    }
+    .hero-sub {
+      text-align: center; color: var(--home-muted); margin-bottom: 28px; font-size: 16px;
+    }
+
+    /* add only the img styling; your .sidebar h1 from main.css stays intact */
+    .sidebar h1 img {
+      width: 30px; height: 30px; border-radius: 6px; background: #fff;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.2);
+      object-fit: cover;
+    }
+
+    fieldset.card {
+      border: 1px solid var(--home-border);
+      border-radius: var(--home-radius);
+      background: var(--home-card);
+      box-shadow: var(--home-shadow);
+      padding: 0; margin: 0 auto;
+    }
+    fieldset.card legend {
+      font-size: 20px; font-weight: 700; padding: 12px 18px;
+      background: linear-gradient(180deg,#f9fafb,#f3f4f6);
+      border: 1px solid var(--home-border); border-bottom: none;
+      border-top-left-radius: var(--home-radius);
+      border-top-right-radius: var(--home-radius);
+      color: #111827;
+    }
+    .card-body { padding: 24px 26px 28px; }
+    .row-compact { display: grid; gap: 18px; }
+    .browse-row { display: flex; gap: 10px; align-items: center; }
+
+    .btn-xl {
+      font-size: 18px; padding: 14px 22px; border-radius: 12px; border: none;
+      background: var(--home-accent); color:#fff;
+      box-shadow: 0 8px 18px rgba(22,163,74,.25), 0 2px 6px rgba(16,185,129,.18);
+    }
+    .btn-xl:hover { background: var(--home-accent-600); }
+    .btn-xl:focus { outline: none; box-shadow: 0 0 0 4px rgba(34,197,94,.28); }
+
+    .open-wrap {
+      text-align:center; padding: 28px 0 8px; font-size: 22px; color:#1f2937; font-weight:700;
+    }
+    .hint { color: var(--home-muted); font-size: 12px; margin-top: 4px; }
+
+    @media (max-width: 720px){
+      .hero-title { font-size: 34px; }
+      .browse-row { flex-direction: column; align-items: stretch; }
+      .btn-xl { width: 100%; }
+    }
+  /* cleaned: user-guide styles centralized in main.css */
+  </style>
+</head>
+<body>
+
+  <a class="user-guide-link" href="https://tensorhvac.com/create-and-open-projects" target="_blank" rel="noopener">User Guide</a>
+
+  <!-- Sidebar with robust icon path + JS fallback -->
+  <div class="sidebar">
+    <h1>
+      tensorHVAC-Pro-2026.1.0
+    </h1>
+    <div class="sidebar-note">
+      <div>
+        <p><b>tensorHVAC-Pro </b> is a dedicated software for detailed HVAC flow and thermal analysis.</p>
+        <p>Designed for easy-to-use Computational Fluid Dynamics (CFD) advanced simulation with focus on your project problem solving.</p>
+      </div>
+
+    </div>
+    <div style="margin-top:auto; font-size:12px; opacity:.75">© tensorcfd</div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <div class="home-container">
+      <div class="hero-title">Welcome to tensorHVAC-Pro-2026.1.0</div>
+
+      <!-- Create New Case -->
+      <fieldset class="card">
+        <legend>Create New Case</legend>
+        <div class="card-body">
+          <div class="row-compact">
+            <div>
+              <label>*Case name:</label>
+              <input type="text" id="caseName" placeholder="myRoomCase" />
+              <div class="hint">Use letters, numbers, hyphens, or underscores.</div>
+            </div>
+            <div>
+              <label>*Project path:</label>
+              <div class="browse-row">
+                <input type="text" id="casePath" placeholder="/path/to/projects" />
+                <button id="browsePath" title="Choose a folder">Browse…</button>
+              </div>
+              <div class="hint">Choose the parent folder where your new case directory will be created.</div>
+            </div>
+            <div style="text-align:center; padding-top:8px">
+              <button id="createCaseBtn" class="btn-xl">Create Case</button>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Open existing -->
+      <div class="open-wrap">Open existing case</div>
+      <div style="text-align:center; padding-bottom: 30px;">
+        <button id="openCaseBtn" class="btn-xl">Browse and Open</button>
+      </div>
+
+      <div id="activeCase" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script src="../scripts/home.js"></script>
+</body>
+</html>

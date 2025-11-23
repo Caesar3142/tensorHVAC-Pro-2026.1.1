@@ -1,0 +1,71 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [1 -1 -2 0 0 0 0];
+
+internalField   uniform 101325;
+
+boundaryField
+{
+
+    floor
+    {
+        type            calculated;
+        value           $internalField;
+    }
+
+    ceiling
+    {
+        type            calculated;
+        value           $internalField;
+    }
+
+    inlet_1
+    {
+        type            calculated;
+        value           $internalField;
+    }
+
+    wind
+    {
+        type            freestreamPressure;
+        freestreamValue $internalField;
+    }
+
+
+    outlet
+    {
+        type            calculated;
+        value           $internalField;
+    }
+
+    wall
+    {
+        type            calculated;
+        value           $internalField;
+    }
+
+    object_1
+    {
+        type            calculated;
+        value           $internalField;
+    }
+}
+
+
+// ***************************************************************** //
+// *********************** tensorHVAC-2025 ************************* //
+// ************************ tensorhvac.com ************************* //

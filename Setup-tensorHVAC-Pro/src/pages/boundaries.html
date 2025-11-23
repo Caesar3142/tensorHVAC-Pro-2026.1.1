@@ -1,0 +1,232 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <title>Boundary & Initial Conditions</title>
+  <link rel="stylesheet" href="../styles/main.css" />
+  <style>
+  .grid { display:grid; grid-template-columns: 1fr; gap:10px; }
+  .card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:10px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .row.wrap { flex-wrap: wrap; }
+  label { font-weight:600; display:block; margin:6px 0 4px; font-size:13px }
+  input[type="text"] { width:100%; padding:8px 10px; border:1px solid #d6d6d6; border-radius:8px; font-size:13px }
+  .full { grid-column: 1 / -1; }
+  .mini { width: 150px; font-size:13px }
+  .pill { padding:4px 10px; border:1px solid #d6d6d6; border-radius:999px; background:#f7f7f7; font-size:12px; }
+
+  .list-row { display:grid; grid-template-columns: 120px 1fr; gap:8px; align-items:center; }
+  .list-row > div, .list-row > input, .list-row > select { width:100%; }
+  .list-row b { display:block; margin-bottom:0 }
+  .controls { display:flex; gap:8px; align-items:center; }
+  .controls .mini { width:90px; flex:0 0 90px }
+  .controls input[type="text"] { flex:1 1 auto }
+  .list-row small { opacity:.7 }
+  .btn { padding:6px 10px; border-radius:8px; border:1px solid #d6d6d6; background:#fafafa; font-size:13px }
+  .btn:active { transform: translateY(1px); }
+  .muted { color:#666 }
+
+  .btn-wide { width:100%; display:block; padding:8px 10px }
+
+  .checkbox-row { display:flex; align-items:center; gap:8px; }
+  .hide { display:none !important; }
+  </style>
+</head>
+<body>
+
+  <a class="user-guide-link" href="https://tensorhvac.com/boundary-and-initial-conditions" target="_blank" rel="noopener">User Guide</a>
+
+  <div class="sidebar">
+    <h1>tensorHVAC-Pro-2026.1.0</h1>
+    <div class="nav">
+      <a href="home.html">Home</a>
+      <a href="meshing.html">Meshing</a>
+      <a href="boundaries.html" class="active">Boundaries</a>
+      <a href="general.html">General</a>
+      <a href="solver.html">Solver setup</a>
+      <a href="help.html">Help</a>
+    </div>
+    <div style="margin-top:auto; font-size:12px; opacity:.75">© tensorcfd</div>
+  </div>
+
+  <div class="main">
+    <div class="header">Boundary & Initial Conditions</div>
+    <div class="content">
+      <div class="grid">
+        <!-- Inlets -->
+        <div class="card full">
+          <div class="row" style="justify-content:space-between">
+            <h3 style="margin:0">Inlets</h3>
+            <div class="row">
+              <span class="pill"><span id="inletCount">0</span> inlet(s)</span>
+              <button id="addInlet" class="btn">+ inlet</button>
+              <button id="remInlet" class="btn">− inlet</button>
+            </div>
+          </div>
+          <div class="muted" style="margin:6px 0 12px">
+            Each inlet has velocity vector U (u,v,w) and Temperature.
+            &nbsp;If your data is in flow rate (cfm), you can use 
+            <a href="https://tensorcalculators.com/flow-rate-velocity-for-hvac-calculator/" target="_blank" rel="noopener noreferrer">this calculator &raquo;&raquo;</a>
+          </div>
+          <div id="inletList" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <!-- Wind -->
+        <div class="card full">
+          <h3 style="margin:0">Wind (external)</h3>
+
+          <div class="list-row">
+            <b>Enable</b>
+            <div class="checkbox-row">
+              <input id="windEnabled" type="checkbox" />
+              <label for="windEnabled" class="muted" style="margin:0; font-weight:400">Use external wind</label>
+            </div>
+          </div>
+
+          <!-- Velocity -->
+          <div class="list-row">
+            <b>Velocity U</b>
+            <div class="controls">
+              <input id="windUx" type="text" placeholder="x" class="mini" aria-label="Wind Ux" />
+              <input id="windUy" type="text" placeholder="y" class="mini" aria-label="Wind Uy" />
+              <input id="windUz" type="text" placeholder="z" class="mini" aria-label="Wind Uz" />
+              <select id="windUUnit" class="mini" aria-label="Wind velocity unit">
+                <option value="m/s" selected>m/s</option>
+                <option value="km/h">km/h</option>
+                <option value="mph">mph</option>
+                <option value="ft/s">ft/s</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Temperature -->
+          <div class="list-row">
+            <b>Temperature</b>
+            <div class="controls">
+              <input id="windT" type="text" placeholder="e.g. 300" aria-label="Wind temperature" />
+              <select id="windTUnit" class="mini" aria-label="Wind temperature unit">
+                <option value="C">C</option>
+                <option value="F">F</option>
+                <option value="K" selected>K</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Objects -->
+        <div class="card full">
+          <div class="row" style="justify-content:space-between">
+            <h3 style="margin:0">Objects</h3>
+
+
+            <div class="row">
+              <span class="pill"><span id="objectCount">0</span> object(s)</span>
+              <button id="addObject" class="btn">+ object</button>
+              <button id="remObject" class="btn">− object</button>
+            </div>
+          </div>
+          <div class="muted" style="margin:6px 0 12px">
+              How to calculate temperature gradient?
+             <a href="https://tensorhvac.com/typical-values-of-heat-flux-and-thermal-conductivities-in-hvac-application" target="_blank" rel="noopener noreferrer">Click here &raquo;&raquo;</a>
+
+          </div>
+          <div id="objectList" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <!-- Floor -->
+        <div class="card">
+          <h3 style="margin-top:0">floor</h3>
+             <div class="muted" style="margin:6px 0 12px">
+              How to calculate temperature gradient?
+             <a href="https://tensorhvac.com/typical-values-of-heat-flux-and-thermal-conductivities-in-hvac-application" target="_blank" rel="noopener noreferrer">Click here &raquo;&raquo;</a>
+             </div>
+          <label>Temperature mode</label>
+          <select id="floorMode" class="mini">
+            <option value="driven">driven</option>
+            <option value="fixed" selected>fixed temperature</option>
+            <option value="flux">Temperature Gradient</option>
+          </select>
+
+<!-- Floor controls: replace the last two inputs with this one -->
+<div id="floorControls" class="controls" style="margin-top:6px">
+  <input id="floorT" type="text" placeholder="e.g. 302" />
+  <select id="floorTUnit" class="mini">
+    <option value="C">C</option>
+    <option value="F">F</option>
+    <option value="K" selected>K</option>
+  </select>
+  <!-- NEW: direct gradient -->
+  <input id="floorGrad" type="text" class="mini hide" placeholder="dT/dn [K/m]" title="Temperature gradient (K/m)" />
+</div>
+
+
+        </div>
+
+        <!-- Ceiling -->
+        <div class="card">
+          <h3 style="margin-top:0">ceiling</h3>
+             <div class="muted" style="margin:6px 0 12px">
+              How to calculate temperature gradient?
+             <a href="https://tensorhvac.com/typical-values-of-heat-flux-and-thermal-conductivities-in-hvac-application" target="_blank" rel="noopener noreferrer">Click here &raquo;&raquo;</a>
+             </div>
+          <label>Temperature mode</label>
+          <select id="ceilingMode" class="mini">
+            <option value="driven">driven</option>
+            <option value="fixed" selected>fixed temperature</option>
+            <option value="flux">Temperature Gradient</option>
+          </select>
+
+<!-- Ceiling controls: replace the last two inputs with this one -->
+<div id="ceilingControls" class="controls" style="margin-top:6px">
+  <input id="ceilingT" type="text" placeholder="e.g. 300" />
+  <select id="ceilingTUnit" class="mini">
+    <option value="C">C</option>
+    <option value="F">F</option>
+    <option value="K" selected>K</option>
+  </select>
+  <!-- NEW: direct gradient -->
+  <input id="ceilingGrad" type="text" class="mini hide" placeholder="dT/dn [K/m]" title="Temperature gradient (K/m)" />
+</div>
+
+
+        </div>
+
+        <!-- Walls (dynamic: wall_1, wall_2, …) -->
+        <div class="card full">
+          <div class="row" style="justify-content:space-between">
+            <h3 style="margin:0">Walls</h3>
+            <div class="row">
+              <span class="pill"><span id="wallCount">0</span> wall(s)</span>
+              <button id="addWall" class="btn">+ wall</button>
+              <button id="remWall" class="btn">− wall</button>
+            </div>
+          </div>
+          <div class="muted" style="margin:6px 0 12px">
+             Check the heat flux and thermal conductivity reference
+             <a href="https://tensorhvac.com/typical-values-of-heat-flux-and-thermal-conductivities-in-hvac-application" target="_blank" rel="noopener noreferrer">here &raquo;&raquo;</a>
+          </div>
+          <div id="wallList" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <hr/>
+
+      <div class="row" style="margin:8px 0">
+        <button id="savePreConfig" class="btn-wide">Update Boundary Conditions</button>
+      </div>
+
+      <div class="row" style="justify-content:space-between; margin-top:6px">
+        <button class="secondary" id="backHome">← Meshing</button>
+        <button class="secondary" id="goGeneral">General →</button>
+      </div>
+    </div>
+
+  <!-- Order matters: core first, then modules -->
+  <script src="../scripts/boundaries/core.js"></script>
+  <script src="../scripts/boundaries/inlet.js"></script>
+  <script src="../scripts/boundaries/object.js"></script>
+  <script src="../scripts/boundaries/wall.js"></script>
+    <script src="../scripts/boundaries/triSurfaceList.js"></script>
+</body>
+</html>

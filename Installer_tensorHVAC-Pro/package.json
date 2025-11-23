@@ -1,0 +1,35 @@
+{
+  "name": "Installer_tensorHVAC-Pro",
+  "version": "2026.1.0",
+  "description": "Installer for WSL, OpenFOAM, ParaView-mod, tCFD-Pre, and tensorHVAC-Pro-2026.1.0",
+  "main": "main.js",
+  "author": "PT Tensor Karya Nusantara",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.tensorcfd.installer",
+    "productName": "Installer tensorHVAC-Pro-2026.1.0",
+    "directories": {
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "assets/**"
+    ],
+    "win": {
+      "icon": "assets/app.ico",
+      "target": "nsis"
+    },
+    "asar": true
+  },
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3"
+  }
+}

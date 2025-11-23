@@ -1,0 +1,258 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Meshing</title>
+  <link rel="stylesheet" href="../styles/main.css" />
+  <style>
+    .mesh-layout { display:flex; gap:24px; }
+    #controlsCol { flex: 1 1 auto; min-width:0; display:flex; flex-direction:column; gap:16px; }
+    .card { background:#fff; border:1px solid #dcdcdc; border-radius:12px; padding:16px; width:100%; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    label { font-weight:600; min-width:170px; }
+    select, .btn-wide { width:100%; }
+    .btn-wide { padding:10px 12px; border-radius:10px; }
+    .status { font-size:12px; color:#666; margin-top:8px; min-height:18px; }
+    .muted { font-size:12px; color:#777; }
+    .small-note { font-size:11px; color:#777; margin-top:6px; }
+    .pill { display:inline-block; background:#f5f5f5; border:1px solid #e6e6e6; padding:2px 8px; border-radius:999px; margin:2px; }
+    .danger { color:#b00020; }
+
+    .btn-prepare {
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid #c6f0d3; background:linear-gradient(180deg,#effff4,#e6f9ee);
+      color:#064e3b; font-weight:700; box-shadow: 0 4px 10px rgba(6,78,59,0.06);
+    }
+    .btn-prepare:hover { filter:brightness(.98); }
+
+    .btn-Check {
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid #c6f0d3; background:linear-gradient(180deg,#effff4,#e6f9ee);
+      color:#064e3b; font-weight:700; box-shadow: 0 4px 10px rgba(6,78,59,0.06);
+    }
+    .btn-Check:hover { filter:brightness(.98); }
+
+    .btn-import {
+      width:100%; padding:10px 12px; border-radius:10px; border:1px dashed #d6d6d6; background:#fff; color:#111; font-weight:600;
+    }
+    .btn-import:hover { background:#fafafa; }
+
+    #btnImport { position: relative; z-index: 2; pointer-events: auto; }
+
+    /* Geometry checklist + counters */
+    .geom-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 8px 16px;
+      margin-top: 10px;
+    }
+    .geom-item {
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px; border:1px solid #e8e8e8; border-radius:10px; background:#fafafa;
+    }
+    .geom-item input[type="checkbox"] { transform: scale(1.15); }
+    .geom-item .hint { font-size:11px; color:#666; margin-left:auto; }
+    .geom-item .count {
+      width:72px; display:flex; align-items:center; gap:6px;
+      margin-left:6px; font-weight:600;
+    }
+    .geom-item .count input[type="number"] {
+      width:56px; padding:4px 6px; border:1px solid #dadada; border-radius:8px;
+    }
+    .geom-item .count .lbl { font-size:12px; color:#555; }
+
+    /* Compact Location-in-Mesh UI (CSS-only toggle, CSP-safe) */
+    .loc-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .w-compact { width:240px; }
+    .xyz-inline { display:none; gap:8px; }
+    .xyz-inline input { width:100px; }
+    /* Show XYZ only when Manual is selected (CSS :has needs Chromium 105+) */
+    .loc-row:has(select#locMode option[value="manual"]:checked) .xyz-inline { display:flex; }
+
+    /* Utility */
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+  <a class="user-guide-link" href="https://tensorhvac.com/meshing-in-tensorhvac-pro" target="_blank" rel="noopener">User Guide</a>
+
+  <div class="sidebar">
+    <h1>tensorHVAC-Pro-2026.1.0</h1>
+    <div class="nav">
+      <a href="home.html">Home</a>
+      <a href="meshing.html" class="active">Meshing</a>
+      <a href="boundaries.html">Boundaries</a>
+      <a href="general.html">General</a>
+      <a href="solver.html">Solver setup</a>
+      <a href="help.html">Help</a>
+    </div>
+    <div style="margin-top:auto; font-size:12px; opacity:.75">© tensorcfd</div>
+  </div>
+
+  <div class="main">
+    <div class="header">Meshing</div>
+
+    <div class="content">
+      <div class="mesh-layout">
+        <div id="controlsCol">
+
+          <!-- Geometry Import -->
+          <div class="card">
+            <h3 style="margin-top:0">Geometry</h3>
+            <div class="row" style="gap:8px">
+              <button id="btnPrepare" class="btn-prepare">Prepare Geometry (tCFD-Pre)</button>
+            </div>
+            <div class="row" style="gap:8px; margin-top:8px">
+              <button id="btnImport" class="btn-import">Browse and Import Geometry</button>
+            </div>
+
+            <div id="importStatus" class="status"></div>
+
+            <!-- triSurface browser -->
+            <div class="row" style="margin-top:10px; align-items:flex-start;">
+              <div style="flex:1 1 auto">
+                <h4 style="margin:0 0 6px 0;">Your geometry files</h4>
+                <div id="triListWrap" class="small-note" style="margin-bottom:6px;">
+                  <span id="triListCount">0 file(s)</span>
+                  · <span id="triListPath">constant/triSurface</span>
+                </div>
+                <div id="triListBox" style="max-height:180px; overflow:auto; border:1px solid #e8e8e8; border-radius:10px; background:#fafafa; padding:8px;">
+                  <ul id="triList" style="list-style:none; padding:0; margin:0;">
+                    <!-- populated by JS -->
+                  </ul>
+                </div>
+                <div class="small-note" style="margin-top:6px;">Only <code>.stl</code> and <code>.obj</code> are shown.</div>
+              </div>
+              <div style="width:180px; display:flex; flex-direction:column; gap:8px;">
+                <button id="btnRefreshTri" class="btn-wide">Refresh List</button>
+                <button id="btnClearSTLs" class="btn-wide" style="border:1px solid #f3c1c1; background:linear-gradient(180deg,#fff6f6,#ffecec); color:#7a1a1a;">
+                  Clear STLs
+                </button>
+
+              </div>
+            </div>
+            <!-- /triSurface browser -->
+
+            <div class="small-note">
+              Important: name files exactly <code>floor.stl</code>, <code>ceiling.stl</code>, <code>outlet.stl</code>,
+              <code>inlet_1.stl</code>, <code>inlet_2.stl</code>…, <code>object_1.stl</code>, <code>object_2.stl</code>…,
+              <code>wall_1.stl</code>, <code>wall_2.stl</code>…, <code>wind.stl</code>
+            </div>
+            <div class="small-note">Tips: You can import multiple files at once. Binary STL is converted to ASCII automatically.</div>
+            <div class="small-note">Make sure you have a "water tight" geometry for internal flow problem.</div>
+
+            <!-- Geometry checklist + counters -->
+            <div style="margin-top:14px;">
+              <h4 style="margin:0 0 6px 0;">Use these geometries</h4>
+              <div class="geom-grid">
+                <label class="geom-item">
+                  <input type="checkbox" id="chk-ceiling" checked>
+                  ceiling <span class="hint">ceiling.stl</span>
+                </label>
+
+                <label class="geom-item">
+                  <input type="checkbox" id="chk-floor" checked>
+                  floor <span class="hint">floor.stl</span>
+                </label>
+
+                <label class="geom-item">
+                  <input type="checkbox" id="chk-inlet" checked>
+                  inlet
+                  <span class="count"><span class="lbl">#</span><input id="num-inlet" type="number" min="1" step="1" value="1"></span>
+                  <span class="hint">inlet_1.stl … inlet_*.stl</span>
+                </label>
+
+                <label class="geom-item">
+                  <input type="checkbox" id="chk-object" checked>
+                  object
+                  <span class="count"><span class="lbl">#</span><input id="num-object" type="number" min="1" step="1" value="1"></span>
+                  <span class="hint">object_1.stl … object_*.stl</span>
+                </label>
+
+                <label class="geom-item">
+                  <input type="checkbox" id="chk-outlet" checked>
+                  outlet <span class="hint">outlet.stl</span>
+                </label>
+
+                <label class="geom-item">
+                  <input type="checkbox" id="chk-wall" checked>
+                  wall
+                  <span class="count"><span class="lbl">#</span><input id="num-wall" type="number" min="1" step="1" value="1"></span>
+                  <span class="hint">wall_1.stl … wall_*.stl</span>
+                </label>
+
+                <label class="geom-item">
+                  <input type="checkbox" id="chk-wind" checked>
+                  wind <span class="hint">wind.stl (Check if you want to run external flow)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-top:0">Global Mesh Resolution</h3>
+            <div class="row">
+              <select id="globalRes">
+                <option value="coarse">coarse</option>
+                <option value="medium" selected>medium</option>
+                <option value="fine">fine</option>
+                <option value="manual">manual</option>
+              </select>
+            </div>
+            <!-- Manual Δ input (hidden unless 'manual' is selected) -->
+            <div id="globalResManualWrap" class="row hidden" style="margin-top:8px;">
+              <label for="globalResDelta" style="min-width:auto;">Cell size Δ</label>
+              <input id="globalResDelta" type="text" inputmode="decimal" placeholder="e.g. 0.25 or 2e-1" style="width:200px;">
+              <span class="muted">meters</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-top:0">Local Mesh Resolution</h3>
+            <div class="row">
+              <select id="localRes">
+                <option value="coarse">coarse</option>
+                <option value="medium" selected>medium</option>
+                <option value="fine">fine</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Location-in-Mesh -->
+          <div class="card" id="locCard">
+            <h5 style="margin-top:0">Location-in-Mesh</h5>
+            <div class="loc-row">
+              <select id="locMode" class="w-compact">
+                <option value="auto" selected>Automatic</option>
+                <option value="manual">Manual input</option>
+              </select>
+              <div class="xyz-inline">
+                <input id="locX" type="number" step="any" placeholder="x">
+                <input id="locY" type="number" step="any" placeholder="y">
+                <input id="locZ" type="number" step="any" placeholder="z">
+              </div>
+            </div>
+          </div>
+
+          <button id="applyMesh" class="btn-wide">Update Mesh</button>
+          <div id="status" class="status"></div>
+
+          <div class="row" style="gap:8px">
+            <button id="btnCheck" class="btn-Check">Check Mesh (paraView)</button>
+          </div>
+
+        </div>
+      </div>
+
+      <hr/>
+      <div class="row">
+        <div class="secondary"><button class="secondary" id="backPre">← Back to Home</button></div>
+        <div class="secondary" style="margin-left:auto"><button id="goSolver" class="secondary">Boundaries →</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App module -->
+  <script type="module" src="../scripts/mesh/app.js"></script>
+</body>
+</html>

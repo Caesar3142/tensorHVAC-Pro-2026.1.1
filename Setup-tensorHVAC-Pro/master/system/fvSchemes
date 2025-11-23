@@ -1,0 +1,82 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    // keep steady for your case; for transient runs switch to: Euler
+    default         steadyState;
+}
+
+gradSchemes
+{
+    // limit gradients to improve robustness on skewed/non-orthogonal meshes
+    default         Gauss linear;
+    grad(U)         cellLimited Gauss linear 1;
+    grad(h)         cellLimited Gauss linear 1;
+    grad(k)         cellLimited Gauss linear 1;
+    grad(epsilon)   cellLimited Gauss linear 1;
+    grad(omega)     cellLimited Gauss linear 1;
+    grad(K)         cellLimited Gauss linear 1;
+}
+
+divSchemes
+{
+    default                     none;
+
+    // Momentum: TVD vector limiter (good stability vs. accuracy balance)
+    div(phi,U)                  bounded Gauss vanLeerV;
+
+    // Enthalpy/energy: TVD scalar limiter
+    div(phi,h)                  bounded Gauss vanLeer;
+
+    // Turbulence & extra scalars: keep robust upwind
+    div(phi,k)                  bounded Gauss upwind;
+    div(phi,epsilon)            bounded Gauss upwind;
+    div(phi,omega)              bounded Gauss upwind;
+    div(phi,K)                  bounded Gauss upwind;
+    div(phi,Ekp)                bounded Gauss upwind;
+    div(phi,age)                bounded Gauss upwind;
+
+    // Viscous term remains linear (implicit diffusion is stable)
+    div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
+}
+
+laplacianSchemes
+{
+    // corrected handles non-orthogonality more safely than pure orthogonal
+    default         Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    // linear is fine; TVD handled in divSchemes
+    default         linear;
+}
+
+snGradSchemes
+{
+    // orthogonal is stable; if mesh is very skewed you may try 'corrected'
+    default         orthogonal;
+}
+
+wallDist
+{
+    method meshWave;
+}
+
+// ***************************************************************** //
+// *********************** tensorHVAC-2025 ************************* //
+// ************************ tensorhvac.com ************************* //

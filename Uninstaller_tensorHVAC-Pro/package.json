@@ -1,0 +1,36 @@
+{
+  "name": "Uninstaller_tensorHVAC-Pro",
+  "version": "2026.1.0",
+  "description": "Uninstaller for WSL Ubuntu/OpenFOAM, ParaView, tCFD-Pre, tensorHVAC-Pro-2026.1.0 and its Launcher",
+  "main": "main.js",
+  "author": "PT Tensor Karya Nusantara",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64 --publish never"
+  },
+  "build": {
+    "appId": "com.tensorcfd.uninstaller",
+    "productName": "Uninstaller tensorHVAC-Pro",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "assets/**"
+    ],
+    "win": {
+      "icon": "assets/app.ico",
+      "target": "nsis"
+    },
+    "asar": true
+  },
+  "devDependencies": {
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3"
+  }
+}

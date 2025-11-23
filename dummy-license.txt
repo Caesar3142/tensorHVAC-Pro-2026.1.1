@@ -1,0 +1,8 @@
+<!-- Tensor HVAC Licenses -->
+<script type="application/json" id="licenses">
+[
+  { "email": "alice@example.com", "product_key": "ABCDEF-123456", "end_date": "2026-03-31" },
+  { "email": "bob@company.com",   "product_key": "ZXCVBN-987654", "end_date": "2025-12-31" },
+  { "email": "wiratama@pttensor.com",   "product_key": "JAKFNS-673812", "end_date": "2023-12-31" }
+]
+</script>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <title>General Setup</title>
+  <link rel="stylesheet" href="../styles/main.css" />
+  <style>
+  .grid { display:grid; grid-template-columns: 1fr; gap:10px; }
+  .card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:10px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .row.wrap { flex-wrap: wrap; }
+  label { font-weight:600; display:block; margin:6px 0 4px; font-size:13px }
+  input[type="text"] { width:100%; padding:8px 10px; border:1px solid #d6d6d6; border-radius:8px; font-size:13px }
+  .full { grid-column: 1 / -1; }
+  .mini { width: 150px; font-size:13px }
+  .pill { padding:4px 10px; border:1px solid #d6d6d6; border-radius:999px; background:#f7f7f7; font-size:12px; }
+
+  .list-row { display:grid; grid-template-columns: 120px 1fr; gap:8px; align-items:center; }
+  .list-row > div, .list-row > input, .list-row > select { width:100%; }
+  .list-row b { display:block; margin-bottom:0 }
+  .controls { display:flex; gap:8px; align-items:center; }
+  .controls .mini { width:90px; flex:0 0 90px }
+  .controls input[type="text"] { flex:1 1 auto }
+  .list-row small { opacity:.7 }
+  .btn { padding:6px 10px; border-radius:8px; border:1px solid #d6d6d6; background:#fafafa; font-size:13px }
+  .btn:active { transform: translateY(1px); }
+  .muted { color:#666 }
+
+  .btn-wide { width:100%; display:block; padding:8px 10px }
+
+  .checkbox-row { display:flex; align-items:center; gap:8px; }
+  .hide { display:none !important; }
+  </style>
+</head>
+<body>
+
+  <a class="user-guide-link" href="https://tensorhvac.com/boundary-and-initial-conditions" target="_blank" rel="noopener">User Guide</a>
+
+  <div class="sidebar">
+    <h1>tensorHVAC-Pro-2026.1.0</h1>
+    <div class="nav">
+      <a href="home.html">Home</a>
+      <a href="meshing.html">Meshing</a>
+      <a href="boundaries.html">Boundaries</a>
+      <a href="general.html" class="active">General</a>
+      <a href="solver.html">Solver setup</a>
+      <a href="help.html">Help</a>
+    </div>
+    <div style="margin-top:auto; font-size:12px; opacity:.75">© tensorcfd</div>
+  </div>
+
+  <div class="main">
+    <div class="header">General Setup</div>
+    <div class="content">
+      <div class="grid">
+        
+
+        <!-- Initial Temperature -->
+        <div class="card">
+          <h3 style="margin-top:0">Initial Temperature</h3>
+          <label for="initialT">uniformly distributed in the building</label>
+          <div style="display:flex; gap:8px; align-items:center">
+            <input id="initialT" type="text" placeholder="300" />
+            <select id="initialTUnit" class="mini">
+              <option value="C">C</option>
+              <option value="F">F</option>
+              <option value="K" selected>K</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Comfort Parameters -->
+        <div class="card" style="display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
+        <!-- Heading -->
+        <h3 style="margin:0">Comfort Calculation</h3>
+
+        <!-- Learn more -->
+        <div class="muted" style="margin:0">
+            Learn more about these parameters
+            <a href="https://tensorhvac.com/comfort-parameters-for-hvac-theory-guide"
+            target="_blank" rel="noopener noreferrer">here &raquo;&raquo;</a>
+        </div>
+
+  
+        <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; width:100%;">
+            <!-- Clothing -->
+            <div style="min-width:180px;">
+            <p style="margin:0 0 6px 0;">Clothing</p>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input id="Clo" type="text" placeholder="0.5" />
+            </div>
+        </div>
+
+        <!-- Metabolic -->
+        <div style="min-width:180px;">
+            <p style="margin:0 0 6px 0;">Metabolic</p>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input id="MtbRt" type="text" placeholder="1.2" />
+            </div>
+        </div>
+
+        <!-- Relative Humidity -->
+        <div style="min-width:180px;">
+            <p style="margin:0 0 6px 0;">Relative Humidity</p>
+            <div style="display:flex; gap:8px; align-items:center;">
+            <input id="RH" type="text" placeholder="60" />
+            </div>
+        </div>
+  </div>
+</div>
+
+
+
+        <!-- Gravity -->
+        <div class="card">
+          <h3 style="margin-top:0">Gravity</h3>
+          <label for="gravityDir">direction</label>
+          <select id="gravityDir" class="mini">
+            <option value="-9.81 0 0">-X</option>
+            <option value="9.81 0 0">+X</option>
+            <option value="0 -9.81 0">-Y</option>
+            <option value="0 9.81 0">+Y</option>
+            <option value="0 0 -9.81">-Z</option>
+            <option value="0 0 9.81">+Z</option>
+          </select>
+        </div>
+      </div>
+
+      <hr/>
+
+      <div class="row" style="margin:8px 0">
+        <button id="saveGeneral" class="btn-wide">Update Setup</button>
+      </div>
+
+      <div class="row" style="justify-content:space-between; margin-top:6px">
+        <button class="secondary" id="backBoundaries">← Boundaries</button>
+        <button class="secondary" id="goSolver">Solver →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order matters: core first, then modules -->
+  <script src="../scripts/general.js"></script>
+
+</body>
+</html>
