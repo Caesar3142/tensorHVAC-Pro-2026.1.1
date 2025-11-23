@@ -81,11 +81,15 @@ try {
 
 /* ---------- Initial paint ---------- */
 window.addEventListener("DOMContentLoaded", () => {
-  const ac = localStorage.getItem("activeCase");
-  if (ac) {
-    setActiveCase(ac); // also informs titlebar on first load
-    const n = projectNameFromPath(ac);
-    const nameSlot = $("projectName");
-    if (nameSlot) nameSlot.textContent = n;
+  try {
+    const ac = localStorage.getItem("activeCase");
+    if (ac) {
+      setActiveCase(ac); // also informs titlebar on first load
+      const n = projectNameFromPath(ac);
+      const nameSlot = $("projectName");
+      if (nameSlot) nameSlot.textContent = n;
+    }
+  } catch (e) {
+    console.error('[home] Initialization error:', e);
   }
 });

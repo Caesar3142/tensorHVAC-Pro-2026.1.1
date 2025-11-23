@@ -32,6 +32,8 @@ html.no-transition *,
 html.no-transition *::before,
 html.no-transition *::after {
   transition: none !important;
+  /* Ensure interactions are not blocked */
+  pointer-events: auto !important;
 }
 body { 
   margin:0; 

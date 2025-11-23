@@ -607,10 +607,15 @@
               touched = true; break;
             }
           }
-          if (touched) setTimeout(() => { ensureEditableInputs(); }, 25);
+          if (touched) {
+            clearTimeout(obs._debounce);
+            obs._debounce = setTimeout(() => { ensureEditableInputs(); }, 25);
+          }
         });
         obs.observe(content, { attributes: true, subtree: true, attributeFilter: ['disabled','readonly','style','class'] });
-        setTimeout(() => { try { obs.disconnect(); } catch(e){} }, 30_000);
+        // Keep observer active - don't disconnect after 30s
+        // Also add periodic check every 5 seconds as backup
+        setInterval(() => { ensureEditableInputs(); }, 5000);
       }
     } catch (e) { console.warn('[core] observer install failed', e && e.message); }
   }
@@ -634,10 +639,18 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
-    if (!caseRoot) { alert("No active case. Open one on Home."); window.location.href = "home.html"; return; }
-    if (!window.BCGeneral) { console.warn('[core] general.js not loaded before core.js'); }
-    wireUi();
-    loadBCs();
-    ensureEditableInputs();
+    try {
+      if (!caseRoot) { alert("No active case. Open one on Home."); window.location.href = "home.html"; return; }
+      if (!window.BCGeneral) { console.warn('[core] general.js not loaded before core.js'); }
+      wireUi();
+      loadBCs();
+      ensureEditableInputs();
+    } catch (e) {
+      console.error('[core] Initialization error:', e);
+      // Ensure inputs are still editable even if initialization fails
+      setTimeout(() => {
+        try { ensureEditableInputs(); } catch {}
+      }, 100);
+    }
   });
 })();

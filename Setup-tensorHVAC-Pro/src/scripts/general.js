@@ -369,8 +369,12 @@ value           (${gval});
 
   // ---------- Init ----------
   document.addEventListener("DOMContentLoaded", async () => {
-    if (!caseRoot) { alert("No active case. Open one on Home."); window.location.href = "home.html"; return; }
-    wireButtons();
-    await loadGeneral();
+    try {
+      if (!caseRoot) { alert("No active case. Open one on Home."); window.location.href = "home.html"; return; }
+      wireButtons();
+      await loadGeneral();
+    } catch (e) {
+      console.error('[general] Initialization error:', e);
+    }
   });
 })();

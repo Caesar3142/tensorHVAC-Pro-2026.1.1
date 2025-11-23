@@ -255,9 +255,10 @@ async function saveAll() {
 
 /* ---------------- wire up ---------------- */
 window.addEventListener("DOMContentLoaded", () => {
-  if (!ensureCase()) return;
+  try {
+    if (!ensureCase()) return;
 
-  // Wire buttons
+    // Wire buttons
   $("saveAll")   ?.addEventListener("click", saveAll);
   $("backGeneral")  ?.addEventListener("click", ()=> window.location.href="general.html");
   $("openResult")?.addEventListener("click", async () => {
@@ -325,11 +326,19 @@ window.addEventListener("DOMContentLoaded", () => {
         obs.__t = setTimeout(ensureEditableInputs, 25);
       });
       obs.observe(content, { attributes:true, subtree:true, attributeFilter:['disabled','readonly','style','class'] });
-      // disconnect later to avoid cost
-      setTimeout(()=>{ try { obs.disconnect(); } catch {} }, 30_000);
+      // Keep observer active - don't disconnect after 30s
+      // Also add periodic check every 5 seconds as backup
+      setInterval(ensureEditableInputs, 5000);
     }
-  } catch {}
+  } catch (e) { console.warn('[solver] observer install failed', e && e.message); }
 
-  // Load values
-  loadPage();
+    // Load values
+    loadPage();
+  } catch (e) {
+    console.error('[solver] Initialization error:', e);
+    // Ensure inputs are still editable even if initialization fails
+    setTimeout(() => {
+      try { ensureEditableInputs(); } catch {}
+    }, 100);
+  }
 });
