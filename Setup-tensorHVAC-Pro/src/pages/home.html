@@ -28,13 +28,24 @@
       --home-radius: 12px;
     }
 
-    /* only this page’s main panel uses the lighter bg */
+    body.dark-mode {
+      --home-bg: #0f172a;
+      --home-card: #1e293b;
+      --home-ink: #f1f5f9;
+      --home-muted: #94a3b8;
+      --home-accent: #6eaa5e;
+      --home-accent-600: #5a8f4d;
+      --home-border: #334155;
+      --home-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* only this page's main panel uses the lighter bg */
     .main { background: var(--home-bg); }
 
     .home-container { max-width: 960px; margin: 0 auto; padding: 16px 20px 48px; }
 
     .hero-title {
-      font-size: 44px; font-weight: 800; color: #1e293b; text-align: center; margin: 20px 0 8px;
+      font-size: 44px; font-weight: 800; color: var(--home-ink); text-align: center; margin: 20px 0 8px;
     }
     .hero-sub {
       text-align: center; color: var(--home-muted); margin-bottom: 28px; font-size: 16px;
@@ -56,11 +67,11 @@
     }
     fieldset.card legend {
       font-size: 20px; font-weight: 700; padding: 12px 18px;
-      background: linear-gradient(180deg,#f9fafb,#f3f4f6);
+      background: linear-gradient(180deg,var(--bg),var(--panel));
       border: 1px solid var(--home-border); border-bottom: none;
       border-top-left-radius: var(--home-radius);
       border-top-right-radius: var(--home-radius);
-      color: #111827;
+      color: var(--home-ink);
     }
     .card-body { padding: 24px 26px 28px; }
     .row-compact { display: grid; gap: 18px; }
@@ -75,7 +86,7 @@
     .btn-xl:focus { outline: none; box-shadow: 0 0 0 4px rgba(34,197,94,.28); }
 
     .open-wrap {
-      text-align:center; padding: 28px 0 8px; font-size: 22px; color:#1f2937; font-weight:700;
+      text-align:center; padding: 28px 0 8px; font-size: 22px; color:var(--home-ink); font-weight:700;
     }
     .hint { color: var(--home-muted); font-size: 12px; margin-top: 4px; }
 
@@ -146,6 +157,7 @@
     </div>
   </div>
 
+  <script src="../scripts/darkMode.js"></script>
   <script src="../scripts/home.js"></script>
 </body>
 </html>

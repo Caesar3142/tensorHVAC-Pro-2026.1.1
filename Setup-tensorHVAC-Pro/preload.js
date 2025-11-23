@@ -102,6 +102,14 @@ const api = {
     return () => ipcRenderer.removeListener("menu-open-case", cb);
   },
   
+  // Dark mode toggle
+  onToggleDarkMode: (handler) => {
+    if (typeof handler !== "function") return () => {};
+    const cb = () => handler();
+    ipcRenderer.on("toggle-dark-mode", cb);
+    return () => ipcRenderer.removeListener("toggle-dark-mode", cb);
+  },
+  
   // Generic invoke helper (for app:proceed, etc.)
   invoke: (channel, ...args) => invoke(channel, ...args),
 

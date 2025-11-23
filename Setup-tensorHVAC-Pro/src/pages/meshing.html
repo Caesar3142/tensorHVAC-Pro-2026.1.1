@@ -9,33 +9,54 @@
   <style>
     .mesh-layout { display:flex; gap:24px; }
     #controlsCol { flex: 1 1 auto; min-width:0; display:flex; flex-direction:column; gap:16px; }
-    .card { background:#fff; border:1px solid #dcdcdc; border-radius:12px; padding:16px; width:100%; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px; width:100%; color:var(--text); }
     .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    label { font-weight:600; min-width:170px; }
+    label { font-weight:600; min-width:170px; color:var(--text); }
+    h3, h4, h5 { color:var(--text); }
     select, .btn-wide { width:100%; }
     .btn-wide { padding:10px 12px; border-radius:10px; }
-    .status { font-size:12px; color:#666; margin-top:8px; min-height:18px; }
-    .muted { font-size:12px; color:#777; }
-    .small-note { font-size:11px; color:#777; margin-top:6px; }
-    .pill { display:inline-block; background:#f5f5f5; border:1px solid #e6e6e6; padding:2px 8px; border-radius:999px; margin:2px; }
+    .status { font-size:12px; color:var(--text-secondary); margin-top:8px; min-height:18px; }
+    .muted { font-size:12px; color:var(--text-secondary); }
+    .small-note { font-size:11px; color:var(--text-secondary); margin-top:6px; }
+    .pill { display:inline-block; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:2px 8px; border-radius:999px; margin:2px; }
     .danger { color:#b00020; }
+    body.dark-mode .danger { color:#fca5a5; }
+    
+    /* Override inline styles for dark mode */
+    body.dark-mode #btnClearSTLs {
+      border-color: rgba(220, 38, 38, 0.3) !important;
+      background: rgba(220, 38, 38, 0.15) !important;
+      color: #fca5a5 !important;
+    }
 
     .btn-prepare {
       width:100%; padding:10px 12px; border-radius:10px; border:1px solid #c6f0d3; background:linear-gradient(180deg,#effff4,#e6f9ee);
       color:#064e3b; font-weight:700; box-shadow: 0 4px 10px rgba(6,78,59,0.06);
     }
     .btn-prepare:hover { filter:brightness(.98); }
+    body.dark-mode .btn-prepare {
+      border-color: rgba(110, 170, 94, 0.3);
+      background: linear-gradient(180deg, rgba(22, 163, 74, 0.15), rgba(16, 185, 129, 0.1));
+      color: #86efac;
+      box-shadow: 0 4px 10px rgba(6, 78, 59, 0.2);
+    }
 
     .btn-Check {
       width:100%; padding:10px 12px; border-radius:10px; border:1px solid #c6f0d3; background:linear-gradient(180deg,#effff4,#e6f9ee);
       color:#064e3b; font-weight:700; box-shadow: 0 4px 10px rgba(6,78,59,0.06);
     }
     .btn-Check:hover { filter:brightness(.98); }
+    body.dark-mode .btn-Check {
+      border-color: rgba(110, 170, 94, 0.3);
+      background: linear-gradient(180deg, rgba(22, 163, 74, 0.15), rgba(16, 185, 129, 0.1));
+      color: #86efac;
+      box-shadow: 0 4px 10px rgba(6, 78, 59, 0.2);
+    }
 
     .btn-import {
-      width:100%; padding:10px 12px; border-radius:10px; border:1px dashed #d6d6d6; background:#fff; color:#111; font-weight:600;
+      width:100%; padding:10px 12px; border-radius:10px; border:1px dashed var(--input-border); background:var(--panel); color:var(--text); font-weight:600;
     }
-    .btn-import:hover { background:#fafafa; }
+    .btn-import:hover { background:var(--bg); }
 
     #btnImport { position: relative; z-index: 2; pointer-events: auto; }
 
@@ -48,18 +69,18 @@
     }
     .geom-item {
       display:flex; align-items:center; gap:10px;
-      padding:8px 10px; border:1px solid #e8e8e8; border-radius:10px; background:#fafafa;
+      padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--bg);
     }
     .geom-item input[type="checkbox"] { transform: scale(1.15); }
-    .geom-item .hint { font-size:11px; color:#666; margin-left:auto; }
+    .geom-item .hint { font-size:11px; color:var(--text-secondary); margin-left:auto; }
     .geom-item .count {
       width:72px; display:flex; align-items:center; gap:6px;
       margin-left:6px; font-weight:600;
     }
     .geom-item .count input[type="number"] {
-      width:56px; padding:4px 6px; border:1px solid #dadada; border-radius:8px;
+      width:56px; padding:4px 6px; border:1px solid var(--input-border); border-radius:8px; background:var(--input-bg); color:var(--text);
     }
-    .geom-item .count .lbl { font-size:12px; color:#555; }
+    .geom-item .count .lbl { font-size:12px; color:var(--text-secondary); }
 
     /* Compact Location-in-Mesh UI (CSS-only toggle, CSP-safe) */
     .loc-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
@@ -71,6 +92,43 @@
 
     /* Utility */
     .hidden { display:none !important; }
+    
+    /* Dark mode specific adjustments */
+    body.dark-mode code {
+      background: rgba(15, 23, 42, 0.5);
+      color: #cbd5e1;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    
+    body.dark-mode select {
+      background: var(--input-bg);
+      color: var(--text);
+      border: 1px solid var(--input-border);
+    }
+    
+    body.dark-mode #triListBox ul li {
+      color: var(--text);
+    }
+    
+    body.dark-mode #triListBox ul li:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    body.dark-mode .geom-item {
+      color: var(--text);
+    }
+    
+    body.dark-mode .geom-item label {
+      color: var(--text);
+    }
+    
+    /* Ensure all text elements have proper contrast */
+    body.dark-mode .small-note,
+    body.dark-mode .status,
+    body.dark-mode .muted {
+      color: var(--text-secondary);
+    }
   </style>
 </head>
 <body>
@@ -116,12 +174,12 @@
                   <span id="triListCount">0 file(s)</span>
                   · <span id="triListPath">constant/triSurface</span>
                 </div>
-                <div id="triListBox" style="max-height:180px; overflow:auto; border:1px solid #e8e8e8; border-radius:10px; background:#fafafa; padding:8px;">
-                  <ul id="triList" style="list-style:none; padding:0; margin:0;">
+                <div id="triListBox" style="max-height:180px; overflow:auto; border:1px solid var(--border); border-radius:10px; background:var(--bg); padding:8px;">
+                  <ul id="triList" style="list-style:none; padding:0; margin:0; color:var(--text);">
                     <!-- populated by JS -->
                   </ul>
                 </div>
-                <div class="small-note" style="margin-top:6px;">Only <code>.stl</code> and <code>.obj</code> are shown.</div>
+                <div class="small-note" style="margin-top:6px;">Only <code style="background:var(--bg); color:var(--text); padding:2px 4px; border-radius:4px;">.stl</code> and <code style="background:var(--bg); color:var(--text); padding:2px 4px; border-radius:4px;">.obj</code> are shown.</div>
               </div>
               <div style="width:180px; display:flex; flex-direction:column; gap:8px;">
                 <button id="btnRefreshTri" class="btn-wide">Refresh List</button>
@@ -253,6 +311,7 @@
   </div>
 
   <!-- App module -->
+  <script src="../scripts/darkMode.js"></script>
   <script type="module" src="../scripts/mesh/app.js"></script>
 </body>
 </html>

@@ -362,6 +362,16 @@ function createMenu() {
         { role: "reload" },
         { role: "forceReload" },
         { type: "separator" },
+        {
+          label: "Toggle Dark Mode",
+          accelerator: isMac ? "Cmd+Shift+D" : "Ctrl+Shift+D",
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send("toggle-dark-mode");
+            }
+          },
+        },
+        { type: "separator" },
         { role: "toggleDevTools", accelerator: isMac ? "Cmd+Alt+I" : "Ctrl+Shift+I" },
         { type: "separator" },
         { role: "resetZoom" },

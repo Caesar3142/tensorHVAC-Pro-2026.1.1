@@ -8,14 +8,14 @@
   <link rel="stylesheet" href="../styles/main.css" />
   <style>
   .grid { display:grid; grid-template-columns: 1fr; gap:10px; }
-  .card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:10px; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text); }
   .row { display:flex; gap:8px; align-items:center; }
   .row.wrap { flex-wrap: wrap; }
-  label { font-weight:600; display:block; margin:6px 0 4px; font-size:13px }
-  input[type="text"] { width:100%; padding:8px 10px; border:1px solid #d6d6d6; border-radius:8px; font-size:13px }
+  label { font-weight:600; display:block; margin:6px 0 4px; font-size:13px; color:var(--text); }
+  input[type="text"] { width:100%; padding:8px 10px; border:1px solid var(--input-border); border-radius:8px; font-size:13px; background:var(--input-bg); color:var(--text); }
   .full { grid-column: 1 / -1; }
   .mini { width: 150px; font-size:13px }
-  .pill { padding:4px 10px; border:1px solid #d6d6d6; border-radius:999px; background:#f7f7f7; font-size:12px; }
+  .pill { padding:4px 10px; border:1px solid var(--border); border-radius:999px; background:var(--bg); color:var(--text); font-size:12px; }
 
   .list-row { display:grid; grid-template-columns: 120px 1fr; gap:8px; align-items:center; }
   .list-row > div, .list-row > input, .list-row > select { width:100%; }
@@ -24,9 +24,9 @@
   .controls .mini { width:90px; flex:0 0 90px }
   .controls input[type="text"] { flex:1 1 auto }
   .list-row small { opacity:.7 }
-  .btn { padding:6px 10px; border-radius:8px; border:1px solid #d6d6d6; background:#fafafa; font-size:13px }
+  .btn { padding:6px 10px; border-radius:8px; border:1px solid var(--input-border); background:var(--panel); color:var(--text); font-size:13px }
   .btn:active { transform: translateY(1px); }
-  .muted { color:#666 }
+  .muted { color:var(--text-secondary) }
 
   .btn-wide { width:100%; display:block; padding:8px 10px }
 
@@ -223,6 +223,7 @@
     </div>
 
   <!-- Order matters: core first, then modules -->
+  <script src="../scripts/darkMode.js"></script>
   <script src="../scripts/boundaries/core.js"></script>
   <script src="../scripts/boundaries/inlet.js"></script>
   <script src="../scripts/boundaries/object.js"></script>
