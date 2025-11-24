@@ -44,10 +44,12 @@ export function presetFromSnappy(text) {
 
 export function readIndexedCounts(flags) {
   const nIn = Math.max(1, parseInt($('num-inlet')?.value ?? '1', 10) || 1);
+  const nOu = Math.max(1, parseInt($('num-outlet')?.value ?? '1', 10) || 1);
   const nOb = Math.max(1, parseInt($('num-object')?.value ?? '1', 10) || 1);
   const nWa = Math.max(1, parseInt($('num-wall')?.value  ?? '1', 10) || 1);
   return {
     inlet:  flags.inlet  ? nIn : 0,
+    outlet: flags.outlet ? nOu : 0,
     object: flags.object ? nOb : 0,
     wall:   flags.wall   ? nWa : 0,
   };
@@ -55,11 +57,12 @@ export function readIndexedCounts(flags) {
 
 export function buildGeometryBodyWithCounts(flags, counts) {
   const lines = [];
-  for (const k of ["ceiling","floor","outlet"]) {
+  for (const k of ["ceiling","floor"]) {
     if (!flags[k]) continue;
     lines.push("    " + GEO_CANON[k].geomEntry);
   }
   if (flags.inlet)  for (let i = 1; i <= counts.inlet;  i++) lines.push(`    inlet_${i}.stl { type triSurfaceMesh; name inlet_${i}; }`);
+  if (flags.outlet) for (let i = 1; i <= counts.outlet; i++) lines.push(`    outlet_${i}.stl { type triSurfaceMesh; name outlet_${i}; }`);
   if (flags.object) for (let i = 1; i <= counts.object; i++) lines.push(`    object_${i}.stl { type triSurfaceMesh; name object_${i}; }`);
   if (flags.wall)   for (let i = 1; i <= counts.wall;   i++) lines.push(`    wall_${i}.stl { type triSurfaceMesh; name wall_${i}; }`);
   return "\n" + lines.join("\n") + "\n";
@@ -67,26 +70,28 @@ export function buildGeometryBodyWithCounts(flags, counts) {
 
 export function buildRefinementBodyWithCounts(flags, localPair, counts) {
   const lines = [];
-  for (const k of ["ceiling","floor","outlet"]) {
+  for (const k of ["ceiling","floor"]) {
     if (!flags[k]) continue;
     const { refName: rn, defaultLevel: lv } = GEO_CANON[k];
     lines.push(`        ${rn}        { level (${lv[0]} ${lv[1]}); }`);
   }
   if (flags.inlet)  for (let i = 1; i <= counts.inlet;  i++) lines.push(`        inlet_${i}        { level (0 1); }`);
+  if (flags.outlet) for (let i = 1; i <= counts.outlet; i++) lines.push(`        outlet_${i}       { level (0 1); }`);
   if (flags.object) for (let i = 1; i <= counts.object; i++) lines.push(`        object_${i}       { level (${localPair[0]} ${localPair[1]}); }`);
   if (flags.wall)   for (let i = 1; i <= counts.wall;   i++) lines.push(`        wall_${i}         { level (0 0); }`);
   return "\n" + lines.join("\n") + "\n";
 }
 
-export function buildFeaturesBodyWithCounts(flags, counts, inletLevel = 2, objectLevel = 2, wallLevel = 1) {
+export function buildFeaturesBodyWithCounts(flags, counts, inletLevel = 2, outletLevel = 2, objectLevel = 2, wallLevel = 1) {
   const lines = [];
   if (flags.inlet)  for (let i = 1; i <= counts.inlet;  i++) lines.push(`        { file "inlet_${i}.eMesh"; level ${inletLevel}; }`);
+  if (flags.outlet) for (let i = 1; i <= counts.outlet; i++) lines.push(`        { file "outlet_${i}.eMesh"; level ${outletLevel}; }`);
   if (flags.object) for (let i = 1; i <= counts.object; i++) lines.push(`        { file "object_${i}.eMesh"; level ${objectLevel}; }`);
   if (flags.wall)   for (let i = 1; i <= counts.wall;   i++) lines.push(`        { file "wall_${i}.eMesh"; level ${wallLevel}; }`);
   return "\n" + lines.join("\n") + "\n";
 }
 
-export function rewriteSnappyFeatures(text, flags, counts, inletLevel = 2, objectLevel = 2, wallLevel = 1) {
+export function rewriteSnappyFeatures(text, flags, counts, inletLevel = 2, outletLevel = 2, objectLevel = 2, wallLevel = 1) {
   const [cmcStart, cmcEnd] = findBalancedBlock(text, /castellatedMeshControls\s*\{/mi);
   if (cmcStart == null) throw new Error("Could not find 'castellatedMeshControls { ... }'.");
 
@@ -105,7 +110,7 @@ export function rewriteSnappyFeatures(text, flags, counts, inletLevel = 2, objec
     cmcBody = cmcBody.slice(0, kwIdx) + cmcBody.slice(endIdx);
   }
 
-  const inner = buildFeaturesBodyWithCounts(flags, counts, inletLevel, objectLevel, wallLevel);
+  const inner = buildFeaturesBodyWithCounts(flags, counts, inletLevel, outletLevel, objectLevel, wallLevel);
   const injectAt = cmcBody.search(/\bnCellsBetweenLevels\b.*?;/m);
   const idx = injectAt >= 0 ? cmcBody.indexOf(";", injectAt) + 1 : cmcBody.length;
   const block = `\n    features\n    (\n${inner}    );\n`;

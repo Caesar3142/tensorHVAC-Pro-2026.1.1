@@ -60,6 +60,7 @@ export async function upsertSurfaceFeatureExtract(caseRoot, featurePathInCase, f
 
   // helper utils from the same file
   const existingIn = listIndexedFeatureEntries(sfeText, "inlet");
+  const existingOu = listIndexedFeatureEntries(sfeText, "outlet");
   const existingOb = listIndexedFeatureEntries(sfeText, "object");
   const existingWa = listIndexedFeatureEntries(sfeText, "wall");
 
@@ -89,10 +90,12 @@ export async function upsertSurfaceFeatureExtract(caseRoot, featurePathInCase, f
     }
   }
   if (flags.outlet) {
-    sfeText = setFeatureEntryBody(sfeText, `outlet`, [
-      `extractionMethod    extractFromSurface;`,
-      `includedAngle       ${angle};`,
-    ]);
+    for (let i = 1; i <= counts.outlet; i++) {
+      sfeText = setFeatureEntryBody(sfeText, `outlet_${i}`, [
+        `extractionMethod    extractFromSurface;`,
+        `includedAngle       ${angle};`,
+      ]);
+    }
   }
 
   // === Trim surplus or unchecked groups ===
@@ -126,7 +129,13 @@ export async function upsertSurfaceFeatureExtract(caseRoot, featurePathInCase, f
   }
 
   if (!flags.outlet) {
-    sfeText = removeFeatureEntry(sfeText, `outlet`);
+    for (const k of existingOu) sfeText = removeFeatureEntry(sfeText, `outlet_${k}`);
+    sfeText = removeFeatureEntry(sfeText, `outlet`); // legacy non-indexed
+    // Safety purge: remove any stray outlet_* blocks left by unusual dict edits
+    sfeText = sfeText.replace(/(^|\n)\s*outlet_\d+\.stl\s*\{[\s\S]*?\}\s*/g, "\n");
+  } else {
+    // When still checked: shrink if counts decreased
+    for (const k of existingOu) if (k > counts.outlet) sfeText = removeFeatureEntry(sfeText, `outlet_${k}`);
   }
 
   await window.api.writeCaseFile(caseRoot, featurePathInCase, sfeText);

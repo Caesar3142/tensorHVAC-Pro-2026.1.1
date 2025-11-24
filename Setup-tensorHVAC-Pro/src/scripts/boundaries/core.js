@@ -2,24 +2,31 @@
   const byId = (id) => document.getElementById(id);
   const caseRoot = localStorage.getItem("activeCase");
 
-  const DEFAULTS = { inletU: "(0 0 0)", inletT: "290", objectT: "308", wallT: "300" };
+  const DEFAULTS = { inletU: "(0 0 0)", inletT: "290", outletU: "(0 0 0)", outletT: "300", objectT: "308", wallT: "300" };
   const SNAPPY_PATH = "system/snappyHexMeshDict";
 
   const EXTRA_FILES = ["alphat", "epsilon", "omega", "k", "nut", "p", "p_rgh"];
   const EXTRA_RULES = {
     alphat: { inlet: ["type            calculated;","value           $internalField;"],
+              outlet: ["type            calculated;","value           $internalField;"],
               object: ["type            compressible::alphatWallFunction;","Prt             0.85;","value           $internalField;"] },
     epsilon:{ inlet: ["type            fixedValue;","value           $internalField;"],
+              outlet: ["type            zeroGradient;"],
               object:["type            epsilonWallFunction;","Cmu             0.09;","kappa           0.41;","E               9.8;","value           $internalField;"] },
     omega: { inlet:  ["type            fixedValue;","value           $internalField;"],
+             outlet: ["type            zeroGradient;"],
              object: ["type            omegaWallFunction;","value           $internalField;"]},
     k:      { inlet: ["type            fixedValue;","value           $internalField;"],
+              outlet: ["type            zeroGradient;"],
               object:["type            kqRWallFunction;","value           $internalField;"] },
     nut:    { inlet: ["type            calculated;","value           $internalField;"],
+              outlet: ["type            calculated;","value           $internalField;"],
               object:["type            nutkWallFunction;","Cmu             0.09;","kappa           0.41;","E               9.8;","value           $internalField;"] },
     p:      { inlet: ["type            calculated;","value           $internalField;"],
+              outlet: ["type            calculated;","value           $internalField;"],
               object:["type            calculated;","value           $internalField;"] },
     p_rgh:  { inlet: ["type            fixedFluxPressure;","gradient        uniform 0;","value           $internalField;"],
+              outlet: ["type            fixedFluxPressure;","gradient        uniform 0;","value           $internalField;"],
               object:["type            fixedFluxPressure;","gradient        uniform 0;","value           $internalField;"] },
   };
 
@@ -188,6 +195,7 @@
   }
   function normalizeLegacyInText(text) {
     if (getPatchBlock(text, "inlet"))  text = getPatchBlock(text, "inlet_1")  ? removePatch(text, "inlet")  : renamePatch(text, "inlet",  "inlet_1");
+    if (getPatchBlock(text, "outlet")) text = getPatchBlock(text, "outlet_1") ? removePatch(text, "outlet") : renamePatch(text, "outlet", "outlet_1");
     if (getPatchBlock(text, "object")) text = getPatchBlock(text, "object_1") ? removePatch(text, "object") : renamePatch(text, "object", "object_1");
     if (getPatchBlock(text, "wall"))   text = getPatchBlock(text, "wall_1")   ? removePatch(text, "wall")   : renamePatch(text, "wall",   "wall_1");
     return text;
@@ -265,7 +273,7 @@
   }
 
   /* ---------------- snappyHexMesh verify (noop) ---------------- */
-  async function updateSnappyHexMesh(_inletCount, _objectCount, _wallCount) {
+  async function updateSnappyHexMesh(_inletCount, _outletCount, _objectCount, _wallCount) {
     try {
       await window.api.readCaseFile(caseRoot, SNAPPY_PATH);
       return true;
@@ -275,7 +283,7 @@
   }
 
   /* -------- extra files updater (templates) -------- */
-  async function updateExtraFileWithTemplates(relPath, inletCount, objectCount, wallCount) {
+  async function updateExtraFileWithTemplates(relPath, inletCount, outletCount, objectCount, wallCount) {
     let text;
     try {
       text = await window.api.readCaseFile(caseRoot, relPath);
@@ -288,14 +296,19 @@
     text = normalizeLegacyInText(text);
 
     const existingInlets = listIndexedPatches(text, "inlet");
+    const existingOutlets = listIndexedPatches(text, "outlet");
     const existingObjs   = listIndexedPatches(text, "object");
     const existingWalls  = listIndexedPatches(text, "wall");
 
     for (const k of existingInlets) if (k > inletCount) text = removePatch(text, `inlet_${k}`);
+    for (const k of existingOutlets) if (k > outletCount) text = removePatch(text, `outlet_${k}`);
     for (const k of existingObjs)   if (k > objectCount) text = removePatch(text, `object_${k}`);
     for (const k of existingWalls)  if (k > wallCount)   text = removePatch(text, `wall_${k}`);
 
     for (let i = 1; i <= inletCount; i++)  text = setPatchBody(text, `inlet_${i}`,  tpl.inlet);
+    if (tpl.outlet) {
+      for (let i = 1; i <= outletCount; i++) text = setPatchBody(text, `outlet_${i}`, tpl.outlet);
+    }
     for (let i = 1; i <= objectCount; i++) text = setPatchBody(text, `object_${i}`, tpl.object);
     for (let i = 1; i <= wallCount; i++)   text = setPatchBody(text, `wall_${i}`,   tpl.object);
 
@@ -351,7 +364,7 @@
         el.tabIndex = 0;
       });
 
-      const dyn = Array.from(document.querySelectorAll('.inlet-input, .object-input, .wall-input, .temp-mode, .temp-grad, .temp-T, .object-t-unit, .wall-t-unit'));
+      const dyn = Array.from(document.querySelectorAll('.inlet-input, .outlet-input, .object-input, .wall-input, .temp-mode, .temp-grad, .temp-T, .object-t-unit, .wall-t-unit'));
       dyn.forEach(el => {
         try { el.removeAttribute && el.removeAttribute('disabled'); } catch {}
         try { el.removeAttribute && el.removeAttribute('readonly'); } catch {}
@@ -364,7 +377,7 @@
         if (p && p.style) p.style.pointerEvents = 'auto';
       });
 
-      Array.from(document.querySelectorAll('.inlet-vel-unit, .inlet-t-unit, .object-t-unit, .wall-t-unit')).forEach(el => {
+      Array.from(document.querySelectorAll('.inlet-vel-unit, .inlet-t-unit, .outlet-vel-unit, .outlet-t-unit, .object-t-unit, .wall-t-unit')).forEach(el => {
         try { el.removeAttribute && el.removeAttribute('disabled'); } catch {}
         el.disabled = false; if (el.style) el.style.pointerEvents = 'auto'; el.tabIndex = 0;
       });
@@ -432,6 +445,37 @@
       await window.BC.modules.inlet.renderFromFiles(Utxt, Ttxt, DEFAULTS);
       await window.BC.modules.object.renderFromFiles(Utxt, Ttxt, DEFAULTS);
       await window.BC.modules.wall.renderFromFiles(Utxt, Ttxt, DEFAULTS);
+      
+      // Outlets are automatically handled from meshing - no UI needed
+      // But we still need to ensure outlet patches exist in boundary files
+      const { getPatchBlock, upsertPatch, listIndexedPatches } = BC.utils;
+      const outletIdxU = listIndexedPatches(Utxt, "outlet");
+      const outletIdxT = listIndexedPatches(Ttxt, "outlet");
+      const outletCount = Math.max(outletIdxU.at(-1) || 0, outletIdxT.at(-1) || 0, 0);
+      
+      // Ensure outlets have default boundary conditions if they exist in mesh
+      for (let i = 1; i <= outletCount; i++) {
+        if (!getPatchBlock(Utxt, `outlet_${i}`)) {
+          Utxt = upsertPatch(Utxt, `outlet_${i}`, [
+            `type            inletOutlet;`,
+            `inletValue      uniform (${DEFAULTS.outletU.replace(/[()]/g, '')});`,
+            `value           uniform (${DEFAULTS.outletU.replace(/[()]/g, '')});`,
+          ]);
+        }
+        if (!getPatchBlock(Ttxt, `outlet_${i}`)) {
+          Ttxt = upsertPatch(Ttxt, `outlet_${i}`, [
+            `type            inletOutlet;`,
+            `inletValue      uniform ${DEFAULTS.outletT};`,
+            `value           uniform ${DEFAULTS.outletT};`,
+          ]);
+        }
+      }
+      
+      // Write updated files if outlets were added
+      if (outletCount > 0) {
+        await window.api.writeCaseFile(caseRoot, "0/U", Utxt);
+        await window.api.writeCaseFile(caseRoot, "0/T", Ttxt);
+      }
 
       // Floor/Ceiling modes from T
       const floorBlk = getPatchBlock(Ttxt, "floor");
@@ -498,6 +542,29 @@
       ({ Utxt, Ttxt } = window.BC.modules.inlet.applyToFiles(Utxt, Ttxt, inletCol.values, { toMs, toK }));
       ({ Utxt, Ttxt } = window.BC.modules.object.applyToFiles(Utxt, Ttxt, objectCol.values, { toK }));
       ({ Utxt, Ttxt } = window.BC.modules.wall.applyToFiles(Utxt, Ttxt, wallCol.values, { toK }));
+      
+      // Outlets are automatically handled - ensure they exist with defaults
+      const { getPatchBlock, upsertPatch, listIndexedPatches } = BC.utils;
+      const outletIdxU = listIndexedPatches(Utxt, "outlet");
+      const outletIdxT = listIndexedPatches(Ttxt, "outlet");
+      const outletCount = Math.max(outletIdxU.at(-1) || 0, outletIdxT.at(-1) || 0, 0);
+      
+      for (let i = 1; i <= outletCount; i++) {
+        if (!getPatchBlock(Utxt, `outlet_${i}`)) {
+          Utxt = upsertPatch(Utxt, `outlet_${i}`, [
+            `type            inletOutlet;`,
+            `inletValue      uniform (${DEFAULTS.outletU.replace(/[()]/g, '')});`,
+            `value           uniform (${DEFAULTS.outletU.replace(/[()]/g, '')});`,
+          ]);
+        }
+        if (!getPatchBlock(Ttxt, `outlet_${i}`)) {
+          Ttxt = upsertPatch(Ttxt, `outlet_${i}`, [
+            `type            inletOutlet;`,
+            `inletValue      uniform ${DEFAULTS.outletT};`,
+            `value           uniform ${DEFAULTS.outletT};`,
+          ]);
+        }
+      }
 
       // Floor
       (function(){
@@ -539,14 +606,14 @@
       await window.api.writeCaseFile(caseRoot, "0/U", Utxt);
       await window.api.writeCaseFile(caseRoot, "0/T", Ttxt);
 
-      // Extra template files
-      await updateExtraFileWithTemplates(`0/alphat`, inletCol.count, objectCol.count, wallCol.count);
-      await updateExtraFileWithTemplates(`0/epsilon`, inletCol.count, objectCol.count, wallCol.count);
-      await updateExtraFileWithTemplates(`0/omega`,  inletCol.count, objectCol.count, wallCol.count);
-      await updateExtraFileWithTemplates(`0/k`,      inletCol.count, objectCol.count, wallCol.count);
-      await updateExtraFileWithTemplates(`0/nut`,    inletCol.count, objectCol.count, wallCol.count);
-      await updateExtraFileWithTemplates(`0/p`,      inletCol.count, objectCol.count, wallCol.count);
-      await updateExtraFileWithTemplates(`0/p_rgh`,  inletCol.count, objectCol.count, wallCol.count);
+      // Extra template files (outlets are automatically detected from mesh)
+      await updateExtraFileWithTemplates(`0/alphat`, inletCol.count, outletCount, objectCol.count, wallCol.count);
+      await updateExtraFileWithTemplates(`0/epsilon`, inletCol.count, outletCount, objectCol.count, wallCol.count);
+      await updateExtraFileWithTemplates(`0/omega`,  inletCol.count, outletCount, objectCol.count, wallCol.count);
+      await updateExtraFileWithTemplates(`0/k`,      inletCol.count, outletCount, objectCol.count, wallCol.count);
+      await updateExtraFileWithTemplates(`0/nut`,    inletCol.count, outletCount, objectCol.count, wallCol.count);
+      await updateExtraFileWithTemplates(`0/p`,      inletCol.count, outletCount, objectCol.count, wallCol.count);
+      await updateExtraFileWithTemplates(`0/p_rgh`,  inletCol.count, outletCount, objectCol.count, wallCol.count);
 
 
       ensureEditableInputs();
@@ -555,7 +622,7 @@
       try { byId('savePreConfig')?.blur(); } catch {}
       try { document.activeElement && document.activeElement.blur && document.activeElement.blur(); } catch {}
 
-      const firstDyn = document.querySelector('.inlet-input, .object-input, .wall-input');
+      const firstDyn = document.querySelector('.inlet-input, .outlet-input, .object-input, .wall-input');
       if (firstDyn) { try { firstDyn.focus(); firstDyn.select && firstDyn.select(); } catch {} }
     } catch (e) {
       console.error(e);

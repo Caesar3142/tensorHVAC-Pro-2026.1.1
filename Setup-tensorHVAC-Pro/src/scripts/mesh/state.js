@@ -44,7 +44,7 @@ export function inferChecklistFromSnappy(text) {
     floor:   present("floor"),
     inlet:   present("inlet_1"),
     object:  present("object_1"),
-    outlet:  present("outlet"),
+    outlet:  present("outlet_1") || present("outlet"), // support both indexed and legacy
     wall:    present("wall_1"),
     wind:    present("wind"),
   };

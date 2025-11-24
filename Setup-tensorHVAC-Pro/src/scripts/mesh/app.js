@@ -194,7 +194,7 @@ $('applyMesh').addEventListener('click', async () => {
     const counts = readIndexedCounts(flags);
 
     snpText = rewriteSnappyWithGeometryChecklist(snpText, flags, pair);
-    snpText = rewriteSnappyFeatures(snpText, flags, counts, 2, 2, 1);
+    snpText = rewriteSnappyFeatures(snpText, flags, counts, 2, 2, 2, 1);
 
     await upsertSurfaceFeatureExtract(caseRoot, featurePathInCase, flags, counts, 150);
 

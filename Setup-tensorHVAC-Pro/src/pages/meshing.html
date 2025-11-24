@@ -211,9 +211,9 @@
             <!-- /triSurface browser -->
 
             <div class="small-note">
-              Important: name files exactly <code>floor.stl</code>, <code>ceiling.stl</code>, <code>outlet.stl</code>,
-              <code>inlet_1.stl</code>, <code>inlet_2.stl</code>…, <code>object_1.stl</code>, <code>object_2.stl</code>…,
-              <code>wall_1.stl</code>, <code>wall_2.stl</code>…, <code>wind.stl</code>
+              Important: name files exactly <code>floor.stl</code>, <code>ceiling.stl</code>,
+              <code>inlet_1.stl</code>, <code>inlet_2.stl</code>…, <code>outlet_1.stl</code>, <code>outlet_2.stl</code>…,
+              <code>object_1.stl</code>, <code>object_2.stl</code>…, <code>wall_1.stl</code>, <code>wall_2.stl</code>…, <code>wind.stl</code>
             </div>
             <div class="small-note">Tips: You can import multiple files at once. Binary STL is converted to ASCII automatically.</div>
             <div class="small-note">Make sure you have a "water tight" geometry for internal flow problem.</div>
@@ -248,7 +248,9 @@
 
                 <label class="geom-item">
                   <input type="checkbox" id="chk-outlet" checked>
-                  outlet <span class="hint">outlet.stl</span>
+                  outlet
+                  <span class="count"><span class="lbl">#</span><input id="num-outlet" type="number" min="1" step="1" value="1"></span>
+                  <span class="hint">outlet_1.stl … outlet_*.stl</span>
                 </label>
 
                 <label class="geom-item">

@@ -12,24 +12,7 @@ function setMsg(text, ok = false) {
     return;
   }
 
-  msg.classList.add("show");
-  msg.textContent = "";
-  
-  // Clear existing content
-  while (msg.firstChild) {
-    msg.removeChild(msg.firstChild);
-  }
-
-  // Add icon
-  const icon = document.createElement("span");
-  icon.className = "msg-icon";
-  icon.textContent = ok ? "✓" : "✕";
-  msg.appendChild(icon);
-
-  // Add text
-  const textNode = document.createTextNode(text);
-  msg.appendChild(textNode);
-
+  msg.textContent = text;
   msg.className = `msg show ${ok ? "success" : "error"}`;
 }
 
@@ -114,51 +97,7 @@ submitBtn.addEventListener("click", handleSubmit);
   });
 });
 
-// Theme Toggle Functionality
-const themeToggle = document.getElementById("themeToggle");
-const themeIcon = document.getElementById("themeIcon");
-const themeText = document.getElementById("themeText");
-
-function initTheme() {
-  // Force light mode by default, ignore system preference
-  const savedTheme = localStorage.getItem("theme");
-  // Only use saved theme if it exists, otherwise default to light
-  const theme = savedTheme || "light";
-  applyTheme(theme);
-  
-  // Ensure body doesn't have dark-mode class on initial load if light mode
-  if (theme === "light") {
-    document.body.classList.remove("dark-mode");
-    document.body.style.background = "#ffffff";
-  }
-}
-
-function applyTheme(theme) {
-  if (theme === "dark") {
-    document.body.classList.add("dark-mode");
-    document.body.style.background = "#0f172a";
-    themeIcon.textContent = "☀️";
-    themeText.textContent = "Light";
-  } else {
-    document.body.classList.remove("dark-mode");
-    document.body.style.background = "#ffffff";
-    themeIcon.textContent = "🌙";
-    themeText.textContent = "Dark";
-  }
-  localStorage.setItem("theme", theme);
-}
-
-themeToggle.addEventListener("click", () => {
-  const isDark = document.body.classList.contains("dark-mode");
-  applyTheme(isDark ? "light" : "dark");
-});
-
-// Force light mode immediately before DOM loads
-document.body.style.background = "#ffffff";
-document.body.classList.remove("dark-mode");
-
 // Focus on email input when page loads
 window.addEventListener("DOMContentLoaded", () => {
-  initTheme();
   emailInput.focus();
 });

@@ -23,7 +23,7 @@ object_1.stl
     extractionMethod    extractFromSurface;
     includedAngle       150;
 }
-outlet.stl
+outlet_1.stl
 {
     extractionMethod    extractFromSurface;
     includedAngle       150;
@@ -31,6 +31,3 @@ outlet.stl
 
 
 
-
-
-// ************************************************************************* //
