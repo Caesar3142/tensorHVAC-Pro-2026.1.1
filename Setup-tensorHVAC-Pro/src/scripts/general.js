@@ -13,6 +13,14 @@
     if (unit === 'F') return (v - 32) * 5/9 + 273.15;
     return v; // already Kelvin
   }
+  function fromK(k, unit) {
+    if (k == null) return '';
+    const v = Number(k);
+    if (isNaN(v)) return '';
+    if (unit === 'C') return (v - 273.15).toFixed(2);
+    if (unit === 'F') return ((v - 273.15) * 9/5 + 32).toFixed(2);
+    return v.toFixed(2);
+  }
 
   // ---------- OpenFOAM text helpers ----------
   function findBlockBounds(text, keyWord) {
@@ -218,19 +226,56 @@ value           (${gval});
   // ---------- Initial Temperature ----------
   function loadInitialTIntoUi(Ttxt) {
     try {
-      const v = extractInternalFieldUniform(Ttxt) || "";
+      // Temperature from file is always in Kelvin, convert to Celsius for display
+      const vK = extractInternalFieldUniform(Ttxt) || "";
       const el = byId("initialT");
-      if (el) el.value = v;
       const u = byId("initialTUnit");
-      if (u) u.value = "K";
+      if (el && u) {
+        if (vK && !isNaN(parseFloat(vK))) {
+          const vC = fromK(parseFloat(vK), 'C');
+          el.value = vC;
+        } else {
+          el.value = vK;
+        }
+        u.value = "C";
+        if (u.dataset) u.dataset.prevUnit = 'C';
+      }
     } catch {}
   }
   function getInitialTValueKFromUi() {
     const raw = (byId("initialT")?.value || "").trim();
-    const unit = byId("initialTUnit")?.value || "K";
+    const unit = byId("initialTUnit")?.value || "C";
     if (!raw) return '';
     const k = toK(raw, unit);
     return k ?? '';
+  }
+  
+  // ---------- Temperature unit converter ----------
+  function setupInitialTempUnitConverter() {
+    const input = byId('initialT');
+    const unitSelect = byId('initialTUnit');
+    if (!input || !unitSelect) return;
+    
+    // Initialize previous unit
+    if (!unitSelect.dataset.prevUnit) {
+      unitSelect.dataset.prevUnit = unitSelect.value || 'C';
+    }
+    
+    unitSelect.addEventListener('change', () => {
+      const oldUnit = unitSelect.dataset.prevUnit || unitSelect.value || 'C';
+      const newUnit = unitSelect.value;
+      const currentVal = input.value.trim();
+      
+      if (currentVal && !isNaN(parseFloat(currentVal))) {
+        // Convert: oldUnit -> Kelvin -> newUnit
+        const valK = toK(currentVal, oldUnit);
+        if (valK != null) {
+          const newVal = fromK(valK, newUnit);
+          input.value = newVal;
+        }
+      }
+      unitSelect.dataset.prevUnit = newUnit;
+    });
   }
 
   // ---------- Comfort UI ----------
@@ -333,7 +378,7 @@ value           (${gval});
     }
   }
 
-  // ---------- Buttons wiring (don’t remove features) ----------
+  // ---------- Buttons wiring (don't remove features) ----------
   function wireButtons() {
     const saveBtn = byId('saveGeneral');
     const backBtn = byId('backBoundaries');
@@ -354,6 +399,9 @@ value           (${gval});
         finally { window.location.href = "solver.html"; }
       });
     }
+    
+    // Setup temperature unit converter
+    setupInitialTempUnitConverter();
   }
 
   // ---------- Expose API for other pages (e.g., boundaries.html) ----------
