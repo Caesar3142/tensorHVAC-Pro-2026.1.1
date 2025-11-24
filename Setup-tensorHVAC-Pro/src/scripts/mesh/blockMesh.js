@@ -54,9 +54,9 @@ export function replaceVerticesBalanced(text, bb) {
 }
 
 export function deltaFromKey(k) {
-  if (k === "coarse") return 0.4;
-  if (k === "fine")   return 0.1;
-  return 0.2; // medium
+  if (k === "coarse") return 0.3;
+  if (k === "fine")   return 0.075;
+  return 0.15; // medium
 }
 export function tripleFromBBox(bb, delta) {
   const X = Math.abs(bb.xmax - bb.xmin);

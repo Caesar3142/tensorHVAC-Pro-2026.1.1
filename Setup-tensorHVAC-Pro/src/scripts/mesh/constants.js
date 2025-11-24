@@ -5,9 +5,9 @@ export const FEATURE_CANDIDATES = ["system/surfaceFeatureExtractDict"];
 
 /* ---------- local resolution mapping ---------- */
 export const LOCAL_TO_LEVEL = {
-  coarse: [1, 1],
-  medium: [2, 2],
-  fine:   [3, 3],
+  coarse: [1, 2],
+  medium: [2, 3],
+  fine:   [3, 4],
 };
 
 /* ---------- geometry checklist keys ---------- */
