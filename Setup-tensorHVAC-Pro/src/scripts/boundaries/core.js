@@ -425,6 +425,49 @@
     return { mode:'driven' };
   }
 
+  /* ---------------- Detect STL files from triSurface ---------------- */
+  async function detectSTLFiles() {
+    try {
+      if (!window.api?.listDir) return { inlet: 0, outlet: 0, wall: 0, object: 0 };
+      
+      const files = (await window.api.listDir(caseRoot, "constant/triSurface")) || [];
+      const stlFiles = files.filter(f => /\.(stl|obj)$/i.test(f));
+      
+      const counts = { inlet: 0, outlet: 0, wall: 0, object: 0 };
+      
+      for (const filename of stlFiles) {
+        const inletMatch = filename.match(/^inlet_(\d+)\.(stl|obj)$/i);
+        if (inletMatch) {
+          const num = parseInt(inletMatch[1], 10);
+          counts.inlet = Math.max(counts.inlet, num);
+        }
+        
+        const outletMatch = filename.match(/^outlet_(\d+)\.(stl|obj)$/i);
+        if (outletMatch) {
+          const num = parseInt(outletMatch[1], 10);
+          counts.outlet = Math.max(counts.outlet, num);
+        }
+        
+        const wallMatch = filename.match(/^wall_(\d+)\.(stl|obj)$/i);
+        if (wallMatch) {
+          const num = parseInt(wallMatch[1], 10);
+          counts.wall = Math.max(counts.wall, num);
+        }
+        
+        const objectMatch = filename.match(/^object_(\d+)\.(stl|obj)$/i);
+        if (objectMatch) {
+          const num = parseInt(objectMatch[1], 10);
+          counts.object = Math.max(counts.object, num);
+        }
+      }
+      
+      return counts;
+    } catch (e) {
+      console.warn('[boundaries] Failed to detect STL files:', e);
+      return { inlet: 0, outlet: 0, wall: 0, object: 0 };
+    }
+  }
+
   /* ---------------- core load/save orchestrators ---------------- */
   async function loadBCs() {
     try {
@@ -435,26 +478,57 @@
         toK, replaceInternalFieldUniform, extractInternalFieldUniform,
       });
 
+      // Detect STL files to determine what boundary conditions should exist
+      const stlCounts = await detectSTLFiles();
+
       let Utxt = await window.api.readCaseFile(caseRoot, "0/U");
       let Ttxt = await window.api.readCaseFile(caseRoot, "0/T");
       ({ Utxt, Ttxt } = await normalizeUT(Utxt, Ttxt));
 
+      const { getPatchBlock, upsertPatch, listIndexedPatches, removePatch, setPatchBody } = BC.utils;
 
+      // Auto-create/remove inlets based on STL files
+      const existingInlets = listIndexedPatches(Utxt, "inlet");
+      const targetInletCount = stlCounts.inlet || 0;
+      
+      // Remove inlets that don't have STL files
+      for (const idx of existingInlets) {
+        if (idx > targetInletCount) {
+          Utxt = removePatch(Utxt, `inlet_${idx}`);
+          Ttxt = removePatch(Ttxt, `inlet_${idx}`);
+        }
+      }
+      
+      // Create inlets that have STL files but no boundary conditions
+      for (let i = 1; i <= targetInletCount; i++) {
+        if (!getPatchBlock(Utxt, `inlet_${i}`)) {
+          Utxt = upsertPatch(Utxt, `inlet_${i}`, [
+            `type            fixedValue;`,
+            `value           uniform (${DEFAULTS.inletU.replace(/[()]/g, '')});`,
+          ]);
+        }
+        if (!getPatchBlock(Ttxt, `inlet_${i}`)) {
+          Ttxt = upsertPatch(Ttxt, `inlet_${i}`, [
+            `type            fixedValue;`,
+            `value           uniform ${DEFAULTS.inletT};`,
+          ]);
+        }
+      }
 
-      // Render dynamic modules
-      await window.BC.modules.inlet.renderFromFiles(Utxt, Ttxt, DEFAULTS);
-      await window.BC.modules.object.renderFromFiles(Utxt, Ttxt, DEFAULTS);
-      await window.BC.modules.wall.renderFromFiles(Utxt, Ttxt, DEFAULTS);
+      // Auto-create/remove outlets based on STL files
+      const existingOutlets = listIndexedPatches(Utxt, "outlet");
+      const targetOutletCount = stlCounts.outlet || 0;
       
-      // Outlets are automatically handled from meshing - no UI needed
-      // But we still need to ensure outlet patches exist in boundary files
-      const { getPatchBlock, upsertPatch, listIndexedPatches } = BC.utils;
-      const outletIdxU = listIndexedPatches(Utxt, "outlet");
-      const outletIdxT = listIndexedPatches(Ttxt, "outlet");
-      const outletCount = Math.max(outletIdxU.at(-1) || 0, outletIdxT.at(-1) || 0, 0);
+      // Remove outlets that don't have STL files
+      for (const idx of existingOutlets) {
+        if (idx > targetOutletCount) {
+          Utxt = removePatch(Utxt, `outlet_${idx}`);
+          Ttxt = removePatch(Ttxt, `outlet_${idx}`);
+        }
+      }
       
-      // Ensure outlets have default boundary conditions if they exist in mesh
-      for (let i = 1; i <= outletCount; i++) {
+      // Create outlets that have STL files but no boundary conditions
+      for (let i = 1; i <= targetOutletCount; i++) {
         if (!getPatchBlock(Utxt, `outlet_${i}`)) {
           Utxt = upsertPatch(Utxt, `outlet_${i}`, [
             `type            inletOutlet;`,
@@ -470,12 +544,64 @@
           ]);
         }
       }
+
+      // Auto-create/remove walls based on STL files
+      const existingWalls = listIndexedPatches(Utxt, "wall");
+      const targetWallCount = stlCounts.wall || 0;
       
-      // Write updated files if outlets were added
-      if (outletCount > 0) {
-        await window.api.writeCaseFile(caseRoot, "0/U", Utxt);
-        await window.api.writeCaseFile(caseRoot, "0/T", Ttxt);
+      // Remove walls that don't have STL files
+      for (const idx of existingWalls) {
+        if (idx > targetWallCount) {
+          Utxt = removePatch(Utxt, `wall_${idx}`);
+          Ttxt = removePatch(Ttxt, `wall_${idx}`);
+        }
       }
+      
+      // Create walls that have STL files but no boundary conditions
+      for (let i = 1; i <= targetWallCount; i++) {
+        if (!getPatchBlock(Utxt, `wall_${i}`)) {
+          Utxt = upsertPatch(Utxt, `wall_${i}`, [`type            noSlip;`]);
+        }
+        if (!getPatchBlock(Ttxt, `wall_${i}`)) {
+          Ttxt = setPatchBody(Ttxt, `wall_${i}`, [`type            zeroGradient;`]);
+        }
+      }
+
+      // Auto-create/remove objects based on STL files
+      const existingObjects = listIndexedPatches(Utxt, "object");
+      const targetObjectCount = stlCounts.object || 0;
+      
+      // Remove objects that don't have STL files
+      for (const idx of existingObjects) {
+        if (idx > targetObjectCount) {
+          Utxt = removePatch(Utxt, `object_${idx}`);
+          Ttxt = removePatch(Ttxt, `object_${idx}`);
+        }
+      }
+      
+      // Create objects that have STL files but no boundary conditions
+      for (let i = 1; i <= targetObjectCount; i++) {
+        if (!getPatchBlock(Utxt, `object_${i}`)) {
+          Utxt = upsertPatch(Utxt, `object_${i}`, [`type            noSlip;`]);
+        }
+        if (!getPatchBlock(Ttxt, `object_${i}`)) {
+          Ttxt = setPatchBody(Ttxt, `object_${i}`, [`type            zeroGradient;`]);
+        }
+      }
+
+      // Write updated files if changes were made
+      await window.api.writeCaseFile(caseRoot, "0/U", Utxt);
+      await window.api.writeCaseFile(caseRoot, "0/T", Ttxt);
+
+      // Re-read after auto-creating patches
+      Utxt = await window.api.readCaseFile(caseRoot, "0/U");
+      Ttxt = await window.api.readCaseFile(caseRoot, "0/T");
+      ({ Utxt, Ttxt } = await normalizeUT(Utxt, Ttxt));
+
+      // Render dynamic modules (now with auto-created/removed patches)
+      await window.BC.modules.inlet.renderFromFiles(Utxt, Ttxt, DEFAULTS);
+      await window.BC.modules.object.renderFromFiles(Utxt, Ttxt, DEFAULTS);
+      await window.BC.modules.wall.renderFromFiles(Utxt, Ttxt, DEFAULTS);
 
       // Floor/Ceiling modes from T
       const floorBlk = getPatchBlock(Ttxt, "floor");
@@ -712,6 +838,16 @@
       wireUi();
       loadBCs();
       ensureEditableInputs();
+      
+      // Listen for STL file changes to auto-update boundary conditions
+      window.addEventListener('triSurface:changed', async () => {
+        try {
+          await loadBCs();
+          ensureEditableInputs();
+        } catch (e) {
+          console.warn('[boundaries] Failed to refresh after STL change:', e);
+        }
+      });
     } catch (e) {
       console.error('[core] Initialization error:', e);
       // Ensure inputs are still editable even if initialization fails
