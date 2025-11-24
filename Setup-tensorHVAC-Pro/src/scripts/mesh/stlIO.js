@@ -185,6 +185,11 @@ export async function importGeometryFiles(caseRoot, fileList) {
 
   try { window.stlAPI?.refresh?.(caseRoot); } catch {}
 
+  // Trigger auto-detection of geometry counts after import
+  if (window.dispatchEvent) {
+    window.dispatchEvent(new CustomEvent('triSurface:changed'));
+  }
+
   let msg = `Imported ${okCount} file(s).`;
   if (skipCount) msg += ` Skipped ${skipCount} (unsupported extension).`;
   if (errs.length) msg += ` Some errors occurred:\n- ${errs.join("\n- ")}`;

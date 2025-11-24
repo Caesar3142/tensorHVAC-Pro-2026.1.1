@@ -18,7 +18,13 @@ export function wireGeometryImport(caseRoot) {
       const files = Array.from(picker.files || []);
       if (!files.length) { document.body.removeChild(picker); return; }
       setImportStatus('Importing geometry...');
-      try { await importGeometryFiles(caseRoot, files); }
+      try { 
+        await importGeometryFiles(caseRoot, files);
+        // Trigger refresh to auto-detect counts
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('triSurface:changed'));
+        }
+      }
       catch (err) { setImportStatus(`Failed to import: ${err?.message || err}`, true); }
       finally { document.body.removeChild(picker); }
     }, { once: true });
@@ -47,7 +53,7 @@ export function wireGeometryImport(caseRoot) {
   }
 
   // Count inputs feedback
-  ['num-inlet','num-object','num-wall'].forEach(id => {
+  ['num-inlet','num-outlet','num-object','num-wall'].forEach(id => {
     const el = $(id);
     if (el) el.addEventListener('input', () => {
       const status = $('status');

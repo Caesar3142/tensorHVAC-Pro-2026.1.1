@@ -68,6 +68,79 @@ function isMissingBinary(errOrRes, binPath) {
   );
 }
 
+/* ---------------- Auto-detect geometry counts from STL files ------------------ */
+function detectGeometryCounts(files) {
+  const counts = { inlet: 0, outlet: 0, wall: 0, object: 0 };
+  
+  for (const filename of files) {
+    // Match patterns like inlet_1.stl, inlet_2.stl, etc.
+    const inletMatch = filename.match(/^inlet_(\d+)\.(stl|obj)$/i);
+    if (inletMatch) {
+      const num = parseInt(inletMatch[1], 10);
+      counts.inlet = Math.max(counts.inlet, num);
+    }
+    
+    const outletMatch = filename.match(/^outlet_(\d+)\.(stl|obj)$/i);
+    if (outletMatch) {
+      const num = parseInt(outletMatch[1], 10);
+      counts.outlet = Math.max(counts.outlet, num);
+    }
+    
+    const wallMatch = filename.match(/^wall_(\d+)\.(stl|obj)$/i);
+    if (wallMatch) {
+      const num = parseInt(wallMatch[1], 10);
+      counts.wall = Math.max(counts.wall, num);
+    }
+    
+    const objectMatch = filename.match(/^object_(\d+)\.(stl|obj)$/i);
+    if (objectMatch) {
+      const num = parseInt(objectMatch[1], 10);
+      counts.object = Math.max(counts.object, num);
+    }
+  }
+  
+  return counts;
+}
+
+function updateGeometryCounts(counts) {
+  // Auto-update counts based on detected files
+  // Only increase if detected count is greater than current value
+  // This allows manual increases but auto-detects from files
+  // We don't decrease counts automatically - user may have set them manually
+  
+  const inletEl = $('num-inlet');
+  if (inletEl && counts.inlet > 0) {
+    const current = parseInt(inletEl.value || '1', 10) || 1;
+    if (counts.inlet > current) {
+      inletEl.value = String(counts.inlet);
+    }
+  }
+  
+  const outletEl = $('num-outlet');
+  if (outletEl && counts.outlet > 0) {
+    const current = parseInt(outletEl.value || '1', 10) || 1;
+    if (counts.outlet > current) {
+      outletEl.value = String(counts.outlet);
+    }
+  }
+  
+  const wallEl = $('num-wall');
+  if (wallEl && counts.wall > 0) {
+    const current = parseInt(wallEl.value || '1', 10) || 1;
+    if (counts.wall > current) {
+      wallEl.value = String(counts.wall);
+    }
+  }
+  
+  const objectEl = $('num-object');
+  if (objectEl && counts.object > 0) {
+    const current = parseInt(objectEl.value || '1', 10) || 1;
+    if (counts.object > current) {
+      objectEl.value = String(counts.object);
+    }
+  }
+}
+
 /* ---------------- triSurface list + clearing UI ------------------ */
 async function refreshTriList() {
   const list = $('triList');
@@ -92,6 +165,10 @@ async function refreshTriList() {
       }
     }
     if (count) count.textContent = `${shown.length} file(s)`;
+    
+    // Auto-detect and update geometry counts
+    const detectedCounts = detectGeometryCounts(shown);
+    updateGeometryCounts(detectedCounts);
   } catch (e) {
     console.error('[triSurface] refresh failed:', e);
     setImportStatus(`Failed to list triSurface: ${e?.message || e}`, true);
@@ -115,7 +192,7 @@ async function clearSTLs() {
       catch (e) { console.warn('[triSurface] unlink failed:', f, e); }
     }
     try { window.stlAPI?.refresh?.(caseRoot); } catch {}
-    await refreshTriList();
+    await refreshTriList(); // This will auto-detect and update counts (which will be 0 after clearing)
     setImportStatus(`Cleared ${targets.length} STL/OBJ file(s) from triSurface.`);
   } catch (e) {
     console.error('[triSurface] clear failed:', e);
@@ -145,6 +222,9 @@ async function init() {
 
   wireGeometryImport(caseRoot);
   document.addEventListener('triSurface:changed', refreshTriList);
+  
+  // Also listen for custom events from stlIO.js
+  window.addEventListener('triSurface:changed', refreshTriList);
 
   await refreshTriList();
 }
