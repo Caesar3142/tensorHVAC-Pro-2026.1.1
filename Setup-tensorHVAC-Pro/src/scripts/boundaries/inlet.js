@@ -38,7 +38,29 @@
 
     const tUnit = document.createElement('select');
     tUnit.className = 'mini inlet-t-unit';
-    tUnit.innerHTML = `<option value="K" selected>K</option><option value="C">C</option><option value="F">F</option>`;
+    tUnit.innerHTML = `<option value="C" selected>C</option><option value="F">F</option><option value="K">K</option>`;
+    tUnit.value = 'C';
+    
+    // Store previous unit for conversion
+    tUnit.dataset.prevUnit = 'C';
+    
+    // Add event listener to convert temperature when unit changes
+    tUnit.addEventListener('change', () => {
+      const oldUnit = tUnit.dataset.prevUnit || 'C';
+      const newUnit = tUnit.value;
+      const currentVal = inputT.value.trim();
+      
+      if (currentVal && !isNaN(parseFloat(currentVal))) {
+        // Convert: oldUnit -> Kelvin -> newUnit
+        const valK = toK(currentVal, oldUnit);
+        if (valK != null) {
+          const { fromK } = BC.utils;
+          const newVal = fromK(valK, newUnit);
+          inputT.value = newVal;
+        }
+      }
+      tUnit.dataset.prevUnit = newUnit;
+    });
 
     const controls = document.createElement('div');
     controls.className = 'controls';
@@ -62,18 +84,25 @@
     const inletIdxT = listIndexedPatches(Ttxt, "inlet");
     inletCount  = Math.max(inletIdxU.at(-1) || 0, inletIdxT.at(-1) || 0, 1);
 
+    const { fromK } = BC.utils;
     const inletList = byId("inletList");
     inletList.innerHTML = "";
     for (let i = 1; i <= inletCount; i++) {
       const u = getPatchBlock(Utxt, `inlet_${i}`);
       const t = getPatchBlock(Ttxt, `inlet_${i}`);
       const uVal = u ? (u.inner.match(/uniform\s*\(([^)]+)\)/)?.[1] ?? DEFAULTS.inletU) : DEFAULTS.inletU;
-      const tVal = t ? (t.inner.match(/uniform\s*([^;]+);/)?.[1] ?? DEFAULTS.inletT) : DEFAULTS.inletT;
-      inletList.appendChild(makeInletRow(i, uVal, tVal, DEFAULTS));
+      // Temperature from file is always in Kelvin, convert to Celsius for display
+      let tValK = t ? (t.inner.match(/uniform\s*([^;]+);/)?.[1] ?? DEFAULTS.inletT) : DEFAULTS.inletT;
+      const tValC = fromK(parseFloat(tValK) || DEFAULTS.inletT, 'C');
+      inletList.appendChild(makeInletRow(i, uVal, tValC, DEFAULTS));
     }
     Array.from(document.querySelectorAll('.inlet-row')).forEach(row => {
       const vSel = row.querySelector('.inlet-vel-unit'); if (vSel) vSel.value = 'm/s';
-      const tSel = row.querySelector('.inlet-t-unit');   if (tSel) tSel.value = 'K';
+      const tSel = row.querySelector('.inlet-t-unit');
+      if (tSel) {
+        tSel.value = 'C';
+        tSel.dataset.prevUnit = 'C';
+      }
     });
     byId("inletCount").textContent = String(inletCount);
     BC.ensureEditableInputs();
@@ -101,7 +130,7 @@
 
     // Upsert each inlet
     for (let i = 1; i <= N; i++) {
-      const item = inletValues[i-1] || { u: BC.DEFAULTS.inletU, t: BC.DEFAULTS.inletT, vUnit: 'm/s', tUnit: 'K' };
+      const item = inletValues[i-1] || { u: BC.DEFAULTS.inletU, t: BC.DEFAULTS.inletT, vUnit: 'm/s', tUnit: 'C' };
       const uVec = parseVector(item.u.replace(/[()]/g,''));
       const uMs = [ fns.toMs(String(uVec[0]), item.vUnit) ?? 0,
                     fns.toMs(String(uVec[1]), item.vUnit) ?? 0,

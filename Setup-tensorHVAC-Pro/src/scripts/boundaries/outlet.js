@@ -38,7 +38,29 @@
 
     const tUnit = document.createElement('select');
     tUnit.className = 'mini outlet-t-unit';
-    tUnit.innerHTML = `<option value="K" selected>K</option><option value="C">C</option><option value="F">F</option>`;
+    tUnit.innerHTML = `<option value="C" selected>C</option><option value="F">F</option><option value="K">K</option>`;
+    tUnit.value = 'C';
+    
+    // Store previous unit for conversion
+    tUnit.dataset.prevUnit = 'C';
+    
+    // Add event listener to convert temperature when unit changes
+    tUnit.addEventListener('change', () => {
+      const oldUnit = tUnit.dataset.prevUnit || 'C';
+      const newUnit = tUnit.value;
+      const currentVal = inputT.value.trim();
+      
+      if (currentVal && !isNaN(parseFloat(currentVal))) {
+        // Convert: oldUnit -> Kelvin -> newUnit
+        const valK = toK(currentVal, oldUnit);
+        if (valK != null) {
+          const { fromK } = BC.utils;
+          const newVal = fromK(valK, newUnit);
+          inputT.value = newVal;
+        }
+      }
+      tUnit.dataset.prevUnit = newUnit;
+    });
 
     const controls = document.createElement('div');
     controls.className = 'controls';
@@ -62,6 +84,7 @@
     const outletIdxT = listIndexedPatches(Ttxt, "outlet");
     outletCount = Math.max(outletIdxU.at(-1) || 0, outletIdxT.at(-1) || 0, 1);
 
+    const { fromK } = BC.utils;
     const outletList = byId("outletList");
     outletList.innerHTML = "";
     for (let i = 1; i <= outletCount; i++) {
@@ -74,14 +97,20 @@
         const valueMatch = u.inner.match(/value\s+uniform\s*\(([^)]+)\)/);
         uVal = inletMatch ? inletMatch[1] : (valueMatch ? valueMatch[1] : DEFAULTS.outletU);
       }
-      const tVal = t ? (t.inner.match(/inletValue\s+uniform\s*([^;]+);/)?.[1] || 
+      // Temperature from file is always in Kelvin, convert to Celsius for display
+      let tValK = t ? (t.inner.match(/inletValue\s+uniform\s*([^;]+);/)?.[1] || 
                         t.inner.match(/value\s+uniform\s*([^;]+);/)?.[1] || 
                         DEFAULTS.outletT) : DEFAULTS.outletT;
-      outletList.appendChild(makeOutletRow(i, uVal, tVal, DEFAULTS));
+      const tValC = fromK(parseFloat(tValK) || DEFAULTS.outletT, 'C');
+      outletList.appendChild(makeOutletRow(i, uVal, tValC, DEFAULTS));
     }
     Array.from(document.querySelectorAll('.outlet-row')).forEach(row => {
       const vSel = row.querySelector('.outlet-vel-unit'); if (vSel) vSel.value = 'm/s';
-      const tSel = row.querySelector('.outlet-t-unit');   if (tSel) tSel.value = 'K';
+      const tSel = row.querySelector('.outlet-t-unit');
+      if (tSel) {
+        tSel.value = 'C';
+        tSel.dataset.prevUnit = 'C';
+      }
     });
     byId("outletCount").textContent = String(outletCount);
     BC.ensureEditableInputs();
@@ -110,7 +139,7 @@
     // Upsert each outlet (using inletOutlet type like wind)
     const { setPatchBody } = BC.utils;
     for (let i = 1; i <= N; i++) {
-      const item = outletValues[i-1] || { u: BC.DEFAULTS.outletU, t: BC.DEFAULTS.outletT, vUnit: 'm/s', tUnit: 'K' };
+      const item = outletValues[i-1] || { u: BC.DEFAULTS.outletU, t: BC.DEFAULTS.outletT, vUnit: 'm/s', tUnit: 'C' };
       const uVec = parseVector(item.u.replace(/[()]/g,''));
       const uMs = [ fns.toMs(String(uVec[0]), item.vUnit) ?? 0,
                     fns.toMs(String(uVec[1]), item.vUnit) ?? 0,

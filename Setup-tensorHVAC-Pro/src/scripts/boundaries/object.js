@@ -37,8 +37,27 @@
 
     const tUnit = document.createElement('select');
     tUnit.className = 'mini object-t-unit';
-    tUnit.innerHTML = `<option value="K" selected>K</option><option value="C">C</option><option value="F">F</option>`;
-    tUnit.value = 'K';
+    tUnit.innerHTML = `<option value="C" selected>C</option><option value="F">F</option><option value="K">K</option>`;
+    tUnit.value = 'C';
+    tUnit.dataset.prevUnit = 'C';
+    
+    // Add event listener to convert temperature when unit changes
+    tUnit.addEventListener('change', () => {
+      const oldUnit = tUnit.dataset.prevUnit || 'C';
+      const newUnit = tUnit.value;
+      const currentVal = tInput.value.trim();
+      
+      if (currentVal && !isNaN(parseFloat(currentVal))) {
+        // Convert: oldUnit -> Kelvin -> newUnit
+        const valK = toK(currentVal, oldUnit);
+        if (valK != null) {
+          const { fromK } = BC.utils;
+          const newVal = fromK(valK, newUnit);
+          tInput.value = newVal;
+        }
+      }
+      tUnit.dataset.prevUnit = newUnit;
+    });
 
     // NEW: direct gradient input for flux mode
     const gradInput = document.createElement('input');
@@ -76,6 +95,7 @@
     const objIdxT = listIndexedPatches(Ttxt, "object");
     objectCount = Math.max(objIdxU.at(-1) || 0, objIdxT.at(-1) || 0, 0);
 
+    const { fromK } = BC.utils;
     const objectList = byId("objectList");
     objectList.innerHTML = "";
     for (let i = 1; i <= objectCount; i++) {
@@ -91,7 +111,10 @@
           data = { mode: 'flux', grad: g || '' };
         } else {
           const v = extractValueUniform(inner);
-          data = { mode: 'fixed', T: v || DEFAULTS.objectT, grad: '' };
+          // Temperature from file is always in Kelvin, convert to Celsius for display
+          const vK = v || DEFAULTS.objectT;
+          const vC = fromK(parseFloat(vK) || DEFAULTS.objectT, 'C');
+          data = { mode: 'fixed', T: vC, grad: '' };
         }
       }
       objectList.appendChild(makeObjectRow(i, data, DEFAULTS));
@@ -106,7 +129,7 @@
     const values = rows.map(row => {
       const mode = row.querySelector('.temp-mode')?.value || 'fixed';
       const T = row.querySelector('.temp-T')?.value?.trim() || '';
-      const tUnit = row.querySelector('.object-t-unit')?.value || 'K';
+      const tUnit = row.querySelector('.object-t-unit')?.value || 'C';
       const grad = row.querySelector('.temp-grad')?.value?.trim() || '';
       return { mode, T, tUnit, grad };
     });
@@ -120,7 +143,7 @@
     for (const k of listIndexedPatches(Ttxt, "object")) if (k > N) Ttxt = removePatch(Ttxt, `object_${k}`);
 
     for (let i = 1; i <= N; i++) {
-      const item = values[i - 1] || { mode: 'driven', T: BC.DEFAULTS.objectT, tUnit: 'K', grad: '' };
+      const item = values[i - 1] || { mode: 'driven', T: BC.DEFAULTS.objectT, tUnit: 'C', grad: '' };
 
       // U = noSlip always
       Utxt = upsertPatch(Utxt, `object_${i}`, [`type            noSlip;`]);

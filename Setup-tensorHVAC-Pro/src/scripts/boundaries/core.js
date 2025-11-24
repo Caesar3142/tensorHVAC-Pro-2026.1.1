@@ -217,7 +217,7 @@
     const uy = parseFloat(byId("windUy")?.value || "0") || 0;
     const uz = parseFloat(byId("windUz")?.value || "0") || 0;
     const tRaw = (byId("windT")?.value || "").trim();
-    const tUnit = byId("windTUnit")?.value || "K";
+    const tUnit = byId("windTUnit")?.value || "C";
     const TK = tRaw === "" ? null : toK(tRaw, tUnit);
     return { enabled, U: [ux,uy,uz], T: (TK ?? null) };
   }
@@ -242,12 +242,22 @@
       if (Tblk) {
         const t = extractValueUniform(Tblk.inner);
         if (t) {
-          if (byId("windT")) byId("windT").value = t;
-          if (byId("windTUnit")) byId("windTUnit").value = "K";
+          // Temperature from file is always in Kelvin, convert to Celsius for display
+          const tC = fromK(parseFloat(t), 'C');
+          if (byId("windT")) byId("windT").value = tC;
+          const windTUnit = byId("windTUnit");
+          if (windTUnit) {
+            windTUnit.value = "C";
+            if (windTUnit.dataset) windTUnit.dataset.prevUnit = 'C';
+          }
         }
       } else {
         if (byId("windT")) byId("windT").value = "";
-        if (byId("windTUnit")) byId("windTUnit").value = "K";
+        const windTUnit = byId("windTUnit");
+        if (windTUnit) {
+          windTUnit.value = "C";
+          if (windTUnit.dataset) windTUnit.dataset.prevUnit = 'C';
+        }
       }
     } catch (e) {
       console.warn("loadWindIntoUi failed:", e && e.message);
@@ -615,12 +625,17 @@
         if (floorBlk) {
           const det = detectModeFromInner(floorBlk.inner);
           mode = det.mode;
-          if (mode === 'fixed') T = det.T ?? '';
+          if (mode === 'fixed') {
+            // Temperature from file is always in Kelvin, convert to Celsius for display
+            const TK = det.T ?? '';
+            T = TK !== '' && TK != null ? fromK(parseFloat(TK), 'C') : '';
+          }
           if (mode === 'flux') { dTdn = det.dTdn ?? 0; gradEl.value = isFinite(dTdn) ? String(dTdn) : ''; }
         }
         modeSel.value = mode;
         tEl.value = T !== '' && T != null ? String(T) : '';
-        tUnit.value = 'K';
+        tUnit.value = 'C';
+        if (tUnit.dataset) tUnit.dataset.prevUnit = 'C';
         toggleFloorUi(mode);
       })();
 
@@ -632,12 +647,17 @@
         if (ceilBlk) {
           const det = detectModeFromInner(ceilBlk.inner);
           mode = det.mode;
-          if (mode === 'fixed') T = det.T ?? '';
+          if (mode === 'fixed') {
+            // Temperature from file is always in Kelvin, convert to Celsius for display
+            const TK = det.T ?? '';
+            T = TK !== '' && TK != null ? fromK(parseFloat(TK), 'C') : '';
+          }
           if (mode === 'flux') { dTdn = det.dTdn ?? 0; gradEl.value = isFinite(dTdn) ? String(dTdn) : ''; }
         }
         modeSel.value = mode;
         tEl.value = T !== '' && T != null ? String(T) : '';
-        tUnit.value = 'K';
+        tUnit.value = 'C';
+        if (tUnit.dataset) tUnit.dataset.prevUnit = 'C';
         toggleCeilingUi(mode);
       })();
 
@@ -697,7 +717,7 @@
         const mode = byId('floorMode').value;
         if (mode === 'fixed') {
           const Traw = byId('floorT').value.trim();
-          const Tun  = byId('floorTUnit').value || 'K';
+          const Tun  = byId('floorTUnit').value || 'C';
           const Tk   = toK(Traw, Tun);
           Ttxt = setPatchBody(Ttxt, "floor", makeTypeBodyForMode('fixed', { T: Tk }));
         } else if (mode === 'flux') {
@@ -713,7 +733,7 @@
         const mode = byId('ceilingMode').value;
         if (mode === 'fixed') {
           const Traw = byId('ceilingT').value.trim();
-          const Tun  = byId('ceilingTUnit').value || 'K';
+          const Tun  = byId('ceilingTUnit').value || 'C';
           const Tk   = toK(Traw, Tun);
           Ttxt = setPatchBody(Ttxt, "ceiling", makeTypeBodyForMode('fixed', { T: Tk }));
         } else if (mode === 'flux') {
@@ -776,6 +796,34 @@
     g.classList.toggle('hide', !showG);
   }
 
+  /* ---------------- Temperature unit conversion helpers ---------------- */
+  function setupTempUnitConverter(inputId, unitSelectId) {
+    const input = byId(inputId);
+    const unitSelect = byId(unitSelectId);
+    if (!input || !unitSelect) return;
+    
+    // Initialize previous unit
+    if (!unitSelect.dataset.prevUnit) {
+      unitSelect.dataset.prevUnit = unitSelect.value || 'C';
+    }
+    
+    unitSelect.addEventListener('change', () => {
+      const oldUnit = unitSelect.dataset.prevUnit || unitSelect.value || 'C';
+      const newUnit = unitSelect.value;
+      const currentVal = input.value.trim();
+      
+      if (currentVal && !isNaN(parseFloat(currentVal))) {
+        // Convert: oldUnit -> Kelvin -> newUnit
+        const valK = toK(currentVal, oldUnit);
+        if (valK != null) {
+          const newVal = fromK(valK, newUnit);
+          input.value = newVal;
+        }
+      }
+      unitSelect.dataset.prevUnit = newUnit;
+    });
+  }
+
   function wireUi() {
     byId("addInlet").addEventListener("click", () => window.BC.modules.inlet.addRow());
     byId("remInlet").addEventListener("click", () => window.BC.modules.inlet.removeRow());
@@ -789,6 +837,11 @@
 
     byId('floorMode').addEventListener('change', e => toggleFloorUi(e.target.value));
     byId('ceilingMode').addEventListener('change', e => toggleCeilingUi(e.target.value));
+    
+    // Setup temperature unit converters for static controls
+    setupTempUnitConverter('floorT', 'floorTUnit');
+    setupTempUnitConverter('ceilingT', 'ceilingTUnit');
+    setupTempUnitConverter('windT', 'windTUnit');
 
     try {
       const content = document.querySelector('.content');
