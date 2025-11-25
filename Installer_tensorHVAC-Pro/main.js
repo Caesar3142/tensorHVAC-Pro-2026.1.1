@@ -200,12 +200,12 @@ ipcMain.handle('start-install', async (_evt, opts = {}) => {
     if (selections.setupApp) {
       const appZip = tmpPath('tensorHVAC-Pro-Setup.zip');
       await downloadFile('#5.1 Download Setup-tensorHVAC-Pro-2026.1.1', URL_SETUP, appZip);
-      await expandZip('#5.2 Extract Setup → C:\\tensorCFD\\tensorHVAC-Pro\\tensorHVAC-Pro-2026.1.1', appZip, DEST_APP);
+      await expandZip('#5.2 Extract Setup → C:\\tensorCFD\\tensorHVAC-Pro', appZip, DEST_APP);
     }
 
     // #6. Create desktop shortcut
     if (selections.shortcut) {
-      const setupExePath = 'C:\\tensorCFD\\tensorHVAC-Pro\\tensorHVAC-Pro-2026.1.1\\tensorHVAC-Pro.exe';
+      const setupExePath = path.join(DEST_APP, 'tensorHVAC-Pro.exe');
       const ps = `
 $ErrorActionPreference = 'SilentlyContinue'
 
