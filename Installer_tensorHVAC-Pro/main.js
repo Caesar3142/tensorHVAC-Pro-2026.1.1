@@ -118,13 +118,12 @@ const DEST_APP   = 'C:\\tensorCFD\\tensorHVAC-Pro\\tensorHVAC-Pro-2026.1.1'; // 
 
 const URL_UBUNTU   = 'https://cloud-images.ubuntu.com/wsl/releases/24.04/current/ubuntu-noble-wsl-amd64-wsl.rootfs.tar.gz';
 
-const URL_PARAVIEW = 'https://www.dropbox.com/scl/fi/c95pwelb9jgrbj970ppcc/ParaView-mod-tensorCFD-2026.1.1.zip?rlkey=5g43c5cpulclmlxr0ev77daqo&st=8u3w5wat&dl=1';
-const URL_TCFD_PRE = 'https://www.dropbox.com/scl/fi/ke07z4fs92m1x1o5f5kqi/tCFD-Pre-2026.1.1.zip?rlkey=wbcmiymrl79opne97koibbw58&st=e6awmj0c&dl=1';
+const URL_PARAVIEW = 'https://www.dropbox.com/scl/fi/c95pwelb9jgrbj970ppcc/ParaView-mod-tensorCFD-2026.1.0.zip?rlkey=5g43c5cpulclmlxr0ev77daqo&st=8u3w5wat&dl=1';
+const URL_TCFD_PRE = 'https://www.dropbox.com/scl/fi/wl8x4ua73ncwyj2d4jjci/tCFD-Pre-2026.1.1.zip?rlkey=b2uxxbyuv6r5fklumn16eshyw&st=8ldrce34&dl=1';
 
-const URL_SETUP    = 'https://www.dropbox.com/scl/fi/wrq40hwz18pattye23kg3/Setup-tensorHVAC-Pro-2026.1.1.zip?rlkey=s0y4nzszvqpzxzlur2pxi2l49&st=3flinfh3&dl=1';
-const URL_LAUNCHER = 'https://www.dropbox.com/scl/fi/rrmf81d7heovl3gqqt9e1/Launcher-tensorHVAC-Pro-2026.1.1.zip?rlkey=h9mwn1oeb3x6ec9heht28v21e&st=v3y7400s&dl=1';
+const URL_SETUP    = 'https://www.dropbox.com/scl/fi/o61bqrqllewl2gemm6art/tensorHVAC-Pro-2026.1.1.zip?rlkey=g9tkw5j6yalmfmd5gg6ala5sa&st=1afypi9o&dl=1';
 
-const SHORTCUT_NAME = 'tensorHVAC-Pro-2026.1.1 Launcher';
+const SHORTCUT_NAME = 'tensorHVAC-Pro-2026.1.1';
 
 /* ---------------------- Download / Extract helpers ---------------------- */
 async function downloadFile(label, url, outPathAbs) {
@@ -144,7 +143,7 @@ Write-Output "Expanded to ${psq(destDirAbs)}"
 ipcMain.handle('start-install', async (_evt, opts = {}) => {
   const selections = {
     wsl: true, openfoam: true, paraview: true, tcfDpre: true,
-    setupApp: true, launcher: true, shortcut: true,
+    setupApp: true, shortcut: true,
     ...(opts.selections || {})
   };
 
@@ -160,8 +159,7 @@ ipcMain.handle('start-install', async (_evt, opts = {}) => {
   log(`#3 ParaView:   ${selections.paraview ? 'ON' : 'OFF'}\n`);
   log(`#4 tCFD-Pre:   ${selections.tcfDpre ? 'ON' : 'OFF'}\n`);
   log(`#5 Setup App:  ${selections.setupApp ? 'ON' : 'OFF'}\n`);
-  log(`#6 Launcher:   ${selections.launcher ? 'ON' : 'OFF'}\n`);
-  log(`#7 Shortcut:   ${selections.shortcut ? 'ON' : 'OFF'}\n`);
+  log(`#6 Shortcut:   ${selections.shortcut ? 'ON' : 'OFF'}\n`);
   log('-------------------------\n\n');
 
   try {
@@ -205,60 +203,23 @@ ipcMain.handle('start-install', async (_evt, opts = {}) => {
       await expandZip('#5.2 Extract Setup → C:\\tensorCFD\\tensorHVAC-Pro\\tensorHVAC-Pro-2026.1.1', appZip, DEST_APP);
     }
 
-    // #6. Launcher → C:\tensorCFD\tensorHVAC-Pro\tensorHVAC-Pro-2026.1.1
-    if (selections.launcher) {
-      const lz = tmpPath('Launcher_tensorHVAC-Pro.zip');
-      await downloadFile('#6.1 Download Launcher 2026.1.1', URL_LAUNCHER, lz);
-      await expandZip('#6.2 Extract Launcher → C:\\tensorCFD\\tensorHVAC-Pro\\tensorHVAC-Pro-2026.1.1', lz, DEST_APP);
-    }
-
-    // #7. Create desktop shortcut (robust search for launcher exe in the version folder)
+    // #6. Create desktop shortcut
     if (selections.shortcut) {
+      const setupExePath = 'C:\\tensorCFD\\tensorHVAC-Pro\\tensorHVAC-Pro-2026.1.1\\tensorHVAC-Pro.exe';
       const ps = `
 $ErrorActionPreference = 'SilentlyContinue'
 
-# Search only inside the version directory extracted above
-$searchRoot = '${psq(DEST_APP)}'
-$patterns   = @('Launcher*HVAC*Pro*.exe','*Launcher*HVAC*Pro*.exe')  # cover hyphen/underscore variants
+$target = '${psq(setupExePath)}'
+$work   = Split-Path -Path $target -Parent
 
-$maxWaitSec   = 120
-$retryDelayMs = 1500
-$elapsed = 0
-$launcher = $null
-
-function Find-Launcher {
-  param([string]$root,[string[]]$globs)
-  if (-not (Test-Path -LiteralPath $root)) { return $null }
-  $candidates = @()
-  foreach ($g in $globs) {
-    try {
-      $found = Get-ChildItem -Path $root -Recurse -Include $g -File -ErrorAction SilentlyContinue
-      if ($found) { $candidates += $found }
-    } catch {}
-  }
-  if (-not $candidates) { return $null }
-  # filter out installers
-  $candidates = $candidates | Where-Object { ($_.Name -notmatch '(?i)(setup|install)') -and ($_.Extension -ieq '.exe') }
-  if (-not $candidates) { return $null }
-  return ($candidates | Sort-Object LastWriteTime -Descending | Select-Object -First 1)
-}
-
-while (-not $launcher -and $elapsed -lt $maxWaitSec) {
-  $launcher = Find-Launcher -root $searchRoot -globs $patterns
-  if (-not $launcher) { Start-Sleep -Milliseconds $retryDelayMs; $elapsed += [math]::Round($retryDelayMs/1000.0) }
-}
-
-if (-not $launcher) {
-  Write-Output 'No launcher exe found. Tried:'
-  Write-Output ('  root: ' + $searchRoot)
-  $patterns | ForEach-Object { Write-Output ('  pattern: ' + $_) }
+# Verify the executable exists
+if (-not (Test-Path -LiteralPath $target)) {
+  Write-Output ('Setup app not found at: ' + $target)
   Write-Output 'Shortcut not created.'
   exit 0
 }
 
-$target = $launcher.FullName
-$work   = Split-Path -Path $target -Parent
-Write-Output ('Found launcher: ' + $target)
+Write-Output ('Using Setup app: ' + $target)
 
 $shortcutName  = '${psq(SHORTCUT_NAME)}.lnk'
 $userDesktop   = Join-Path $env:USERPROFILE 'Desktop'
@@ -266,7 +227,7 @@ $publicDesktop = Join-Path $env:Public 'Desktop'
 $lnkUser   = Join-Path $userDesktop  $shortcutName
 $lnkPublic = Join-Path $publicDesktop $shortcutName
 
-$tmpLnk = Join-Path $env:TEMP ('tensorhvac_pro_launcher_' + [guid]::NewGuid().ToString() + '.lnk')
+$tmpLnk = Join-Path $env:TEMP ('tensorhvac_pro_setup_' + [guid]::NewGuid().ToString() + '.lnk')
 
 try {
   $sh = New-Object -ComObject WScript.Shell
@@ -274,7 +235,7 @@ try {
   $s.TargetPath       = $target
   $s.WorkingDirectory = $work
   $s.IconLocation     = "$target,0"
-      $s.Description      = 'Launch tensorHVAC-Pro 2026.1.1'
+  $s.Description      = 'Launch tensorHVAC-Pro 2026.1.1'
   $s.Save()
 } catch {
   Write-Output ('Failed to build shortcut: ' + $_.Exception.Message)
@@ -314,7 +275,7 @@ ipcMain.handle('start-uninstall', async (_e, opts = {}) => {
       cancelId: 0,
       title: 'Confirm Uninstall',
       message:
-        'This will remove WSL Ubuntu (and OpenFOAM), ParaView, tCFD-Pre, tensorHVAC-Pro-2026.1.1, and its Launcher.',
+        'This will remove WSL Ubuntu (and OpenFOAM), ParaView, tCFD-Pre, and tensorHVAC-Pro-2026.1.1.',
       detail: 'Action is irreversible. Proceed?'
     });
     if (res !== 1) return { ok: false, canceled: true };
@@ -325,9 +286,7 @@ ipcMain.handle('start-uninstall', async (_e, opts = {}) => {
     paraview: true,
     tcfdpre: true,
     app: true,
-    launcher: true,
     leftovers: true,
-    programs: true,
     shortcuts: true,
     ...(opts.selections || {})
   };
@@ -364,27 +323,15 @@ ipcMain.handle('start-uninstall', async (_e, opts = {}) => {
       cmd: `rmdir /s /q "C:\\tensorCFD\\tensorHVAC-Pro\\tensorHVAC-Pro-2026.1.1" 2>nul`
     });
 
-    if (selections.launcher)
-      steps.push({
-        title: '#5 Remove Launcher-tensorHVAC-Pro-2026.1.1',
-        cmd: `rmdir /s /q "C:\\tensorCFD\\tensorHVAC-Pro\\Launcher-tensorHVAC-Pro-2026.1.1" 2>nul`
-    });
-
   if (selections.leftovers)
     steps.push({
-      title: '#6 Remove Licensing leftovers + shortcuts',
-      cmd: `rmdir /s /q "C:\\tensorCFD\\Licensing" 2>nul & del /q "%USERPROFILE%\\Desktop\\*tensorHVAC*.lnk" 2>nul`
-    });
-
-  if (selections.programs)
-    steps.push({
-      title: '#7 Clean AppData Programs folders',
-      cmd: `rmdir /s /q "%LOCALAPPDATA%\\Programs\\tensorhvac-pro" 2>nul & rmdir /s /q "%LOCALAPPDATA%\\Programs\\tensorHVAC-Pro-Launcher" 2>nul`
+      title: '#5 Remove Licensing leftovers',
+      cmd: `rmdir /s /q "C:\\tensorCFD\\Licensing" 2>nul`
     });
 
   if (selections.shortcuts)
     steps.push({
-      title: '#8 Clean desktop shortcuts',
+      title: '#6 Clean desktop shortcuts',
       cmd: `del /q "%USERPROFILE%\\Desktop\\*tensorHVAC*.lnk" 2>nul`
     });
 

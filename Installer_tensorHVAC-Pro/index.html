@@ -44,7 +44,7 @@
 
   <!-- Install Tab -->
   <div id="install-tab" class="tab-content active">
-    <p>Installs: WSL Ubuntu 24.04, OpenFOAM 2506, ParaView-mod 2026.1.1, tCFD-Pre 2026.1.1, and deploys Setup & Launcher to <code>C:\tensorCFD\tensorHVAC-Pro</code>. Creates a desktop shortcut to the launcher.</p>
+    <p>Installs: WSL Ubuntu 24.04, OpenFOAM 2506, ParaView-mod 2026.1.1, tCFD-Pre 2026.1.1, and deploys Setup app to <code>C:\tensorCFD\tensorHVAC-Pro</code>. Creates a desktop shortcut to the Setup app.</p>
 
     <p>If any problems occur during installation, please check the discussion forum below.</p>
     <button id="forumBtn" type="button" onclick="window.open('https://tensorhvac.com/discussion-forum', '_blank')">Discussion Forum</button>
@@ -57,8 +57,7 @@
       <div class="row"><label><input type="checkbox" id="cb-paraview" checked> #3 ParaView-mod 2026.1.1 → C:\tensorCFD\tools</label></div>
       <div class="row"><label><input type="checkbox" id="cb-tcfdpre" checked> #4 tCFD-Pre 2026.1.1 → C:\tensorCFD\tools</label></div>
       <div class="row"><label><input type="checkbox" id="cb-setup" checked> #5 Setup-tensorHVAC-Pro-2026.1.1 → C:\tensorCFD\tensorHVAC-Pro</label></div>
-      <div class="row"><label><input type="checkbox" id="cb-launcher" checked> #6 Launcher 2026.1.1 → C:\tensorCFD\tensorHVAC-Pro</label></div>
-      <div class="row"><label><input type="checkbox" id="cb-shortcut" checked> #7 Create desktop launcher shortcut</label></div>
+      <div class="row"><label><input type="checkbox" id="cb-shortcut" checked> #6 Create desktop shortcut</label></div>
 
       <div class="controls">
         <button id="checkAll" class="secondary" type="button">Select All</button>
@@ -87,8 +86,7 @@
       <div class="step"><span>#3 ParaView-mod 2026.1.1</span><span id="s-3" class="status">pending</span></div>
       <div class="step"><span>#4 tCFD-Pre 2026.1.1</span><span id="s-4" class="status">pending</span></div>
       <div class="step"><span>#5 Setup (tensorHVAC-Pro-2026.1.1)</span><span id="s-5" class="status">pending</span></div>
-      <div class="step"><span>#6 Launcher 2026.1.1</span><span id="s-6" class="status">pending</span></div>
-      <div class="step"><span>#7 Create desktop shortcut</span><span id="s-7" class="status">pending</span></div>
+      <div class="step"><span>#6 Create desktop shortcut</span><span id="s-6" class="status">pending</span></div>
     </div>
   </div>
 
@@ -96,7 +94,7 @@
   <div id="uninstall-tab" class="tab-content">
     <p>
       This will remove: WSL Ubuntu (and OpenFOAM), ParaView, tCFD-Pre,
-      tensorHVAC-Pro-2026.1.1, and its Launcher.
+      and tensorHVAC-Pro-2026.1.1.
     </p>
 
     <p>If any problems occur during uninstallation, please check the discussion forum below:</p>
@@ -117,16 +115,10 @@
         <label><input type="checkbox" id="cb-app-uninstall" checked> #4 tensorHVAC-Pro-2026.1.1</label>
       </div>
       <div class="row">
-        <label><input type="checkbox" id="cb-launcher-uninstall" checked> #5 Launcher-tensorHVAC-Pro-2026.1.1</label>
+        <label><input type="checkbox" id="cb-leftovers-uninstall" checked> #5 Remove Licensing leftovers</label>
       </div>
       <div class="row">
-        <label><input type="checkbox" id="cb-leftovers-uninstall" checked> #6 Remove Licensing leftovers</label>
-      </div>
-      <div class="row">
-        <label><input type="checkbox" id="cb-programs-uninstall" checked> #7 Clean Local Programs folders</label>
-      </div>
-      <div class="row">
-        <label><input type="checkbox" id="cb-shortcuts-uninstall" checked> #8 Clean related desktop shortcuts</label>
+        <label><input type="checkbox" id="cb-shortcuts-uninstall" checked> #6 Clean desktop shortcuts</label>
       </div>
 
       <div class="controls">
@@ -143,10 +135,8 @@
       <div class="step"><span>#2 ParaView</span><span id="s-u-2" class="status">pending</span></div>
       <div class="step"><span>#3 tCFD-Pre</span><span id="s-u-3" class="status">pending</span></div>
       <div class="step"><span>#4 tensorHVAC-Pro-2026.1.1</span><span id="s-u-4" class="status">pending</span></div>
-      <div class="step"><span>#5 Launcher-tensorHVAC-Pro-2026.1.1</span><span id="s-u-5" class="status">pending</span></div>
-      <div class="step"><span>#6 Licensing leftovers + shortcuts</span><span id="s-u-6" class="status">pending</span></div>
-      <div class="step"><span>#7 Clean AppData Programs folders</span><span id="s-u-7" class="status">pending</span></div>
-      <div class="step"><span>#8 Clean desktop shortcuts</span><span id="s-u-8" class="status">pending</span></div>
+      <div class="step"><span>#5 Licensing leftovers</span><span id="s-u-5" class="status">pending</span></div>
+      <div class="step"><span>#6 Clean desktop shortcuts</span><span id="s-u-6" class="status">pending</span></div>
     </div>
   </div>
 

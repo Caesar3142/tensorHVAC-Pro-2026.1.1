@@ -8,14 +8,21 @@ How to build:
 #1. Build Setup (includes license validation)
 #2. Build installer
 
-UPDATE HISTORY
+PREPARE FOR LAUNCHING
+- Build Setup, tCFD-Pre, and paraView --> Run exe on dist
+- Compress the program data to ZIP, and upload to dropbox
+- Copy and paste links from dropbox to match the installer download links
+- Build Installer/Uninstaller --> Run exe on dist
+- Compress the program data to ZIP --> ready to distribute
 
+UPDATE HISTORY
 Major Update 2026.1.1
 - Merge launcher and setup
 - Merge Installer and uninstaller
 - Auto-detect number of STLs
 - Dark mode
 - Streamlined unit converters
+- Cleaner footprints during install/uninstall
 ----------
 Major update 2026.1.0: 
 - tCFD-Pre first release
