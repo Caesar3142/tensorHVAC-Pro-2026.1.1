@@ -281,10 +281,25 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Launch ParaView with the .foam file path (default Windows path here)
-      const paraviewExe = "C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.1\\bin\\paraview.exe";
-      const foamPath = (casePath.endsWith('\\') || casePath.endsWith('/')) ? `${casePath}${foamName}` : `${casePath}\\${foamName}`;
-      const cmd = `"${paraviewExe}" "${foamPath}"`;
+      // Get custom path or fallback to default
+      if (!window.api?.getToolPath) {
+        alert('Tool path API not available.');
+        showToast('Error: Tool path API unavailable.', 2000);
+        return;
+      }
+      
+      const paraviewExe = await window.api.getToolPath('paraview');
+      if (!paraviewExe) {
+        alert('ParaView path not configured. Please set the path in Tools → Set ParaView Path…');
+        showToast('Error: ParaView path not configured.', 2000);
+        return;
+      }
+      
+      const platform = (window.api?.env?.platform) || (navigator.platform || '').toLowerCase();
+      const foamPath = platform.includes('win')
+        ? ((casePath.endsWith('\\') || casePath.endsWith('/')) ? `${casePath}${foamName}` : `${casePath}\\${foamName}`)
+        : ((casePath.endsWith('\\') || casePath.endsWith('/')) ? `${casePath}${foamName}` : `${casePath}/${foamName}`);
+      const cmd = platform.includes('win') ? `"${paraviewExe}" "${foamPath}"` : `${paraviewExe} "${foamPath}"`;
 
       showToast('Launching ParaView...');
       const res = await window.exec.run(cmd, { timeout: 30_000 });
@@ -302,7 +317,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
       showToast('ParaView launched');
     } catch (e) {
-      // Only show an alert if it’s a missing-binary-style error; otherwise keep quiet
+      // Only show an alert if it's a missing-binary-style error; otherwise keep quiet
       if (isMissingBinary(e, 'paraview')) {
         alert('Failed to launch ParaView: invalid path.');
       } else {

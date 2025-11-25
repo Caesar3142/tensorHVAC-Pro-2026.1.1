@@ -699,7 +699,7 @@ if (!gotLock) {
 const DEFAULT_LAUNCH_TARGETS = (() => {
   if (process.platform === "win32") {
     return {
-      paraview: "C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.1\\bin\\paraview.exe",
+      paraview: "C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.0\\bin\\paraview.exe",
       tCFDPre: "C:\\tensorCFD\\tools\\tCFD-Pre-2026.1.1\\tCFD-Pre-2026.1.1.exe",
     };
   } else if (process.platform === "darwin") {
@@ -801,6 +801,14 @@ ipcMain.handle("exec:run", async (_evt, cmd, opts = {}) => {
       }
     });
   });
+});
+
+// === Get tool path (tCFD-Pre/ParaView) ===
+// Exposes getToolPath to renderer so pages can use custom paths.
+ipcMain.handle("tool:get-path", (_evt, which) => {
+  // Normalize which: "tCFDPre" or "paraview"
+  const normalized = which === "tCFD-Pre" ? "tCFDPre" : (which === "tCFDPre" ? "tCFDPre" : "paraview");
+  return getToolPath(normalized);
 });
 
 /* ---------- End of main.js ---------- */

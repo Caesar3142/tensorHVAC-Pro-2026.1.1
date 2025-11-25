@@ -94,6 +94,12 @@ const api = {
     return invoke("exec:run", cmd, opts);
   },
 
+  // Get tool path (tCFD-Pre/ParaView) - uses custom path if configured
+  getToolPath: (which) => {
+    assertString(which, "which");
+    return invoke("tool:get-path", which);
+  },
+
   // Menu → renderer signal
   onMenuOpenCase: (handler) => {
     if (typeof handler !== "function") return () => {};

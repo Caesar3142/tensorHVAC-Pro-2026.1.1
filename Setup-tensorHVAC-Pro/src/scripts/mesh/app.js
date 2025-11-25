@@ -2,7 +2,7 @@
 import { $, fnum } from './dom.js';
 import {
   BLOCK_CANDIDATES, SNAPPY_CANDIDATES, FEATURE_CANDIDATES,
-  LOCAL_TO_LEVEL, TCFDPRE_PATH
+  LOCAL_TO_LEVEL
 } from './constants.js';
 import {
   presetFromSnappy, rewriteSnappyWithGeometryChecklist, rewriteSnappyFeatures,
@@ -233,19 +233,28 @@ async function init() {
 $('btnPrepare')?.addEventListener('click', async (e) => {
   e.preventDefault();
   if (!window.exec?.run) { alert('Exec bridge not available.'); return; }
+  if (!window.api?.getToolPath) { alert('Tool path API not available.'); return; }
+  
   try {
-    const cmd = `"${TCFDPRE_PATH}"`;
+    // Get custom path or fallback to default
+    const tcfdPrePath = await window.api.getToolPath('tCFDPre');
+    if (!tcfdPrePath) {
+      alert('tCFD-Pre path not configured. Please set the path in Tools → Set tCFD-Pre Path…');
+      return;
+    }
+    
+    const cmd = `"${tcfdPrePath}"`;
     const res = await window.exec.run(cmd, { timeout: 15000 });
 
     if (!res || !res.ok) {
-      if (isMissingBinary(res, TCFDPRE_PATH)) {
+      if (isMissingBinary(res, tcfdPrePath)) {
         alert('tCFD-Pre path looks invalid. Please set the correct path in Tools → Set tCFD-Pre Path…');
       } else {
         console.warn('[btnPrepare] tCFD-Pre may have opened successfully but returned non-ok:', res);
       }
     }
   } catch (err) {
-    if (isMissingBinary(err, TCFDPRE_PATH)) {
+    if (isMissingBinary(err, 'tCFDPre')) {
       alert('Failed to launch tCFD-Pre: the configured path appears invalid.');
     } else {
       console.warn('[btnPrepare] non-fatal launch error (suppressing popup):', err);
@@ -380,12 +389,21 @@ $('btnCheck')?.addEventListener('click', async (e) => {
       return;
     }
 
-    const platform = (window.api?.env?.platform) || (navigator.platform || '').toLowerCase();
-    let paraviewExe = null;
-    if (platform.includes('win')) paraviewExe = 'C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.1\\bin\\paraview.exe';
-    else if (platform.includes('mac') || platform.includes('darwin')) paraviewExe = '/Applications/ParaView.app/Contents/MacOS/paraview';
-    else paraviewExe = '/usr/bin/paraview';
+    // Get custom path or fallback to default
+    if (!window.api?.getToolPath) {
+      alert('Tool path API not available.');
+      status.textContent = 'Error: Tool path API unavailable.';
+      return;
+    }
+    
+    const paraviewExe = await window.api.getToolPath('paraview');
+    if (!paraviewExe) {
+      alert('ParaView path not configured. Please set the path in Tools → Set ParaView Path…');
+      status.textContent = 'Error: ParaView path not configured.';
+      return;
+    }
 
+    const platform = (window.api?.env?.platform) || (navigator.platform || '').toLowerCase();
     const foamPath = platform.includes('win')
       ? `${caseRoot.replace(/[\\\/]$/, '')}\\${projectName}.foam`
       : `${caseRoot.replace(/[\\\/]$/, '')}/${projectName}.foam`;

@@ -26,7 +26,7 @@
               outlet: ["type            calculated;","value           $internalField;"],
               object:["type            calculated;","value           $internalField;"] },
     p_rgh:  { inlet: ["type            fixedFluxPressure;","gradient        uniform 0;","value           $internalField;"],
-              outlet: ["type            fixedFluxPressure;","gradient        uniform 0;","value           $internalField;"],
+              outlet: ["type            fixedValue;","value           $internalField;"],
               object:["type            fixedFluxPressure;","gradient        uniform 0;","value           $internalField;"] },
   };
 
