@@ -139,6 +139,60 @@ Write-Output "Expanded to ${psq(destDirAbs)}"
   await runPowerShellScript(label, ps, `expand_${Date.now()}.ps1`);
 }
 
+// Custom extraction for Setup app to handle nested folder structure
+async function expandSetupApp(label, zipPathAbs, finalDestDir) {
+  const tempExtractDir = path.join(os.tmpdir(), `tensor_setup_extract_${Date.now()}`);
+  const tempExtractDirWin = tempExtractDir.replace(/\//g, '\\');
+  const finalDestDirWin = finalDestDir.replace(/\//g, '\\');
+  
+  const ps = `
+$ErrorActionPreference = 'Stop'
+
+# Step 1: Extract to temporary location
+$tempDir = '${psq(tempExtractDirWin)}'
+$zipPath = '${psq(zipPathAbs)}'
+$finalDest = '${psq(finalDestDirWin)}'
+
+Write-Output "Extracting to temporary location: $tempDir"
+if (!(Test-Path -LiteralPath $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
+Expand-Archive -Path $zipPath -DestinationPath $tempDir -Force
+
+# Step 2: Find the extracted folder (should be tensorHVAC-Pro-2026.1.1)
+$extractedFolders = Get-ChildItem -Path $tempDir -Directory
+if ($extractedFolders.Count -eq 0) {
+  Write-Output "ERROR: No folders found in extracted archive"
+  exit 1
+}
+
+# Step 3: Get the actual extracted folder path
+$extractedFolder = $extractedFolders[0].FullName
+Write-Output "Found extracted folder: $extractedFolder"
+
+# Step 4: Remove final destination if it exists
+if (Test-Path -LiteralPath $finalDest) {
+  Write-Output "Removing existing destination: $finalDest"
+  Remove-Item -LiteralPath $finalDest -Recurse -Force
+}
+
+# Step 5: Ensure parent directory exists
+$parentDir = Split-Path -Path $finalDest -Parent
+if (!(Test-Path -LiteralPath $parentDir)) {
+  New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+}
+
+# Step 6: Move the extracted folder to final destination
+Write-Output "Moving to final destination: $finalDest"
+Move-Item -LiteralPath $extractedFolder -Destination $finalDest -Force
+
+# Step 7: Cleanup temp directory
+Remove-Item -LiteralPath $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+
+Write-Output "Successfully extracted to: $finalDest"
+`.trim();
+  
+  await runPowerShellScript(label, ps, `expand_setup_${Date.now()}.ps1`);
+}
+
 /* ----------------------------- Orchestrator ----------------------------- */
 ipcMain.handle('start-install', async (_evt, opts = {}) => {
   const selections = {
@@ -200,26 +254,36 @@ ipcMain.handle('start-install', async (_evt, opts = {}) => {
     if (selections.setupApp) {
       const appZip = tmpPath('tensorHVAC-Pro-Setup.zip');
       await downloadFile('#5.1 Download Setup-tensorHVAC-Pro-2026.1.1', URL_SETUP, appZip);
-      await expandZip('#5.2 Extract Setup → C:\\tensorCFD\\tensorHVAC-Pro', appZip, DEST_APP);
+      // Use custom extraction to handle nested folder structure
+      await expandSetupApp('#5.2 Extract Setup → C:\\tensorCFD\\tensorHVAC-Pro\\tensorHVAC-Pro-2026.1.1', appZip, DEST_APP);
     }
 
     // #6. Create desktop shortcut
     if (selections.shortcut) {
+      // Construct the path using path.join and normalize it
       const setupExePath = path.join(DEST_APP, 'tensorHVAC-Pro.exe');
+      // Convert to Windows path format for PowerShell
+      const setupExePathWin = setupExePath.replace(/\//g, '\\');
+      const workDir = DEST_APP.replace(/\//g, '\\');
+      
       const ps = `
-$ErrorActionPreference = 'SilentlyContinue'
+$ErrorActionPreference = 'Continue'
 
-$target = '${psq(setupExePath)}'
-$work   = Split-Path -Path $target -Parent
+$target = '${psq(setupExePathWin)}'
+$work   = '${psq(workDir)}'
+
+Write-Output ('Checking for Setup app at: ' + $target)
+Write-Output ('Working directory: ' + $work)
 
 # Verify the executable exists
 if (-not (Test-Path -LiteralPath $target)) {
-  Write-Output ('Setup app not found at: ' + $target)
+  Write-Output ('ERROR: Setup app not found at: ' + $target)
+  Write-Output ('Please ensure the Setup app was installed successfully.')
   Write-Output 'Shortcut not created.'
-  exit 0
+  exit 1
 }
 
-Write-Output ('Using Setup app: ' + $target)
+Write-Output ('✓ Setup app found: ' + $target)
 
 $shortcutName  = '${psq(SHORTCUT_NAME)}.lnk'
 $userDesktop   = Join-Path $env:USERPROFILE 'Desktop'
@@ -229,6 +293,7 @@ $lnkPublic = Join-Path $publicDesktop $shortcutName
 
 $tmpLnk = Join-Path $env:TEMP ('tensorhvac_pro_setup_' + [guid]::NewGuid().ToString() + '.lnk')
 
+# Create the shortcut
 try {
   $sh = New-Object -ComObject WScript.Shell
   $s  = $sh.CreateShortcut($tmpLnk)
@@ -237,21 +302,48 @@ try {
   $s.IconLocation     = "$target,0"
   $s.Description      = 'Launch tensorHVAC-Pro 2026.1.1'
   $s.Save()
+  Write-Output '✓ Shortcut file created successfully'
 } catch {
-  Write-Output ('Failed to build shortcut: ' + $_.Exception.Message)
-  throw
+  Write-Output ('ERROR: Failed to build shortcut: ' + $_.Exception.Message)
+  exit 1
 }
 
-if (-not (Test-Path -LiteralPath $userDesktop))   { New-Item -ItemType Directory -Path $userDesktop   -Force | Out-Null }
-if (-not (Test-Path -LiteralPath $publicDesktop)) { New-Item -ItemType Directory -Path $publicDesktop -Force | Out-Null }
+# Ensure desktop directories exist
+if (-not (Test-Path -LiteralPath $userDesktop)) {
+  try {
+    New-Item -ItemType Directory -Path $userDesktop -Force | Out-Null
+  } catch {
+    Write-Output ('WARNING: Could not create user desktop directory: ' + $_.Exception.Message)
+  }
+}
 
-Copy-Item -LiteralPath $tmpLnk -Destination $lnkUser   -Force
-Copy-Item -LiteralPath $tmpLnk -Destination $lnkPublic -Force
+# Copy to user desktop (primary location)
+try {
+  Copy-Item -LiteralPath $tmpLnk -Destination $lnkUser -Force -ErrorAction Stop
+  Write-Output ('✓ Created shortcut on user desktop: ' + $lnkUser)
+} catch {
+  Write-Output ('ERROR: Failed to copy shortcut to user desktop: ' + $_.Exception.Message)
+  Remove-Item -LiteralPath $tmpLnk -Force -ErrorAction SilentlyContinue
+  exit 1
+}
+
+# Copy to public desktop (optional, may require admin rights)
+if (Test-Path -LiteralPath $publicDesktop) {
+  try {
+    Copy-Item -LiteralPath $tmpLnk -Destination $lnkPublic -Force -ErrorAction Stop
+    Write-Output ('✓ Created shortcut on public desktop: ' + $lnkPublic)
+  } catch {
+    Write-Output ('WARNING: Could not create shortcut on public desktop (may require admin rights): ' + $_.Exception.Message)
+    # This is not a fatal error, continue
+  }
+} else {
+  Write-Output ('INFO: Public desktop directory not found, skipping public desktop shortcut')
+}
+
+# Cleanup temp file
 Remove-Item -LiteralPath $tmpLnk -Force -ErrorAction SilentlyContinue
 
-Write-Output 'Created Desktop shortcuts:'
-Write-Output (' - ' + $lnkUser)
-Write-Output (' - ' + $lnkPublic)
+Write-Output '✓ Desktop shortcut creation completed successfully'
 `.trim();
 
       await runPowerShellScript('Create desktop shortcut', ps, 'tensor_create_shortcut.ps1');

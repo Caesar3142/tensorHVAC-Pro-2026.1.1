@@ -2,10 +2,11 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self'; style-src 'self' 'unsafe-inline">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self'; style-src 'self' 'unsafe-inline'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light">
-  <title>tensorHVAC-Pro - License</title>
+  <title>tensorHVAC-Pro • License</title>
+
   <style>
     * {
       margin: 0;
@@ -13,108 +14,145 @@
       box-sizing: border-box;
     }
 
-    html {
-      background: #f5f5f5 !important;
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(145deg, #5e73da 0%, #7a51b6 100%);
       color-scheme: light;
+      height: 100%;
+      overflow-x: hidden;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      background: #f5f5f5 !important;
-      padding: 20px;
-      color-scheme: light;
+      padding: 32px;
     }
 
+    /* Layout Container */
     .container {
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
+      animation: fadeUp 0.5s ease-out;
     }
 
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card */
     .card {
-      background: #ffffff !important;
-      border-radius: 8px;
-      padding: 32px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 48px 40px;
+      box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.12),
+        0 25px 55px rgba(0, 0, 0, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.45);
     }
 
     h2 {
-      font-size: 20px;
-      font-weight: 600;
-      color: #111827;
-      margin-bottom: 24px;
+      font-size: 30px;
+      font-weight: 800;
       text-align: center;
+      color: #1a1f2e;
+      margin-bottom: 6px;
+      letter-spacing: -0.8px;
     }
 
+    .subtitle {
+      text-align: center;
+      font-size: 15px;
+      color: #6b7280;
+      margin-bottom: 34px;
+    }
+
+    /* Form Elements */
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 22px;
     }
 
     label {
-      display: block;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
       color: #374151;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      display: block;
+      text-transform: uppercase;
     }
 
     input {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 14px;
-      background: #ffffff !important;
-      color: #111827 !important;
+      padding: 14px 16px;
+      font-size: 15px;
+      border-radius: 10px;
+      border: 2px solid #e5e7eb;
+      background: #fff;
+      color: #111827;
+      transition: 0.25s ease;
+    }
+
+    input:hover {
+      border-color: #d1d5db;
     }
 
     input:focus {
       outline: none;
-      border-color: #6eaa5e;
+      border-color: #5fa06c;
+      box-shadow: 0 0 0 3px rgba(95, 160, 108, 0.18);
     }
 
     input::placeholder {
       color: #9ca3af;
     }
 
+    /* Button */
     button {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: 600;
       border: none;
-      border-radius: 6px;
-      background: #6eaa5e;
-      color: white;
-      font-weight: 500;
-      font-size: 14px;
+      border-radius: 12px;
       cursor: pointer;
-      margin-top: 8px;
+      transition: all 0.2s ease;
+      background: linear-gradient(135deg, #5fa06c, #4c8c57);
+      color: #fff;
+      box-shadow: 0 5px 14px rgba(76, 140, 87, 0.32);
     }
 
-    button:hover {
-      background: #5d9950;
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #4c8c57, #3e7c47);
+      box-shadow: 0 8px 20px rgba(76, 140, 87, 0.4);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0px);
     }
 
     button:disabled {
-      background: #d1d5db;
+      background: #cbd2dd;
       cursor: not-allowed;
+      box-shadow: none;
     }
 
     .button-content {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .spinner {
       display: none;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -127,35 +165,47 @@
       display: block;
     }
 
-    .msg {
-      margin-top: 12px;
-      font-size: 13px;
-      padding: 10px;
-      border-radius: 6px;
-      display: none;
+    button.loading .button-text {
+      opacity: 0.75;
     }
 
-    .msg.show {
-      display: block;
+    /* Message Box */
+    .msg {
+      display: none;
+      margin-top: 18px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.55;
+      animation: slideIn 0.3s ease-out;
     }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.show { display: block; }
 
     .msg.error {
       background: #fef2f2;
-      color: #dc2626;
-      border: 1px solid #fecaca;
+      border: 1px solid #f8c7c7;
+      color: #c23232;
     }
 
     .msg.success {
-      background: #f0fdf4;
-      color: #16a34a;
+      background: #ecfdf5;
       border: 1px solid #bbf7d0;
+      color: #15803d;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="card">
       <h2>License Validation</h2>
+      <p class="subtitle">Enter your credentials to continue</p>
 
       <form id="licenseForm">
         <div class="form-group">
@@ -164,7 +214,7 @@
             id="email" 
             type="email" 
             placeholder="your.email@example.com" 
-            required
+            required 
             autocomplete="email"
           >
         </div>
@@ -175,19 +225,19 @@
             id="productKey" 
             type="text" 
             placeholder="XXXXXX-XXXXXX" 
-            required
+            required 
             autocomplete="off"
           >
         </div>
 
-        <button type="submit" id="submit">
+        <button id="submit">
           <div class="button-content">
             <div class="spinner"></div>
             <span class="button-text">Validate</span>
           </div>
         </button>
 
-        <div class="msg" id="msg"></div>
+        <div id="msg" class="msg"></div>
       </form>
     </div>
   </div>
