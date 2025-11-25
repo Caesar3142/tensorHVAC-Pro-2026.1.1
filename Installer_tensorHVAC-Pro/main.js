@@ -121,7 +121,7 @@ const URL_UBUNTU   = 'https://cloud-images.ubuntu.com/wsl/releases/24.04/current
 const URL_PARAVIEW = 'https://www.dropbox.com/scl/fi/c95pwelb9jgrbj970ppcc/ParaView-mod-tensorCFD-2026.1.0.zip?rlkey=5g43c5cpulclmlxr0ev77daqo&st=8u3w5wat&dl=1';
 const URL_TCFD_PRE = 'https://www.dropbox.com/scl/fi/wl8x4ua73ncwyj2d4jjci/tCFD-Pre-2026.1.1.zip?rlkey=b2uxxbyuv6r5fklumn16eshyw&st=8ldrce34&dl=1';
 
-const URL_SETUP    = 'https://www.dropbox.com/scl/fi/o61bqrqllewl2gemm6art/tensorHVAC-Pro-2026.1.1.zip?rlkey=g9tkw5j6yalmfmd5gg6ala5sa&st=1afypi9o&dl=1';
+const URL_SETUP    = 'https://www.dropbox.com/scl/fi/wouuyxe5nt1tkxd8uyef9/tensorHVAC-Pro-2026.1.1.zip?rlkey=w41qu7qm4gwox4r91d4lnc0pm&st=4h2izhge&dl=1';
 
 const SHORTCUT_NAME = 'tensorHVAC-Pro-2026.1.1';
 
