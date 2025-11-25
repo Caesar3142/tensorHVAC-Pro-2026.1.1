@@ -308,7 +308,7 @@ ipcMain.handle('start-uninstall', async (_e, opts = {}) => {
   if (selections.paraview)
     steps.push({
       title: '#2 Remove ParaView',
-      cmd: `rmdir /s /q "C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.1" 2>nul`
+      cmd: `rmdir /s /q "C:\\tensorCFD\\tools\\ParaView-mod-tensorCFD-2026.1.0" 2>nul`
     });
 
   if (selections.tcfdpre)
