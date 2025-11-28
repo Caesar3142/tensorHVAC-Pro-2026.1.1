@@ -13,24 +13,4 @@ FoamFile
     object      surfaceFeatureExtractDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-inlet_1.stl
-{
-    extractionMethod    extractFromSurface;
-    includedAngle       150;
-}
-object_1.stl
-{
-    extractionMethod    extractFromSurface;
-    includedAngle       150;
-}
-outlet_1.stl
-{
-    extractionMethod    extractFromSurface;
-    includedAngle       150;
-}
 
-
-
-
-
-// ************************************************************************* //
